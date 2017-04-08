@@ -329,29 +329,6 @@ Otherwise, the repository will be in the same directory as the master file.")
 
 (defvar pam-new-cards-per-day 75)
 
-(defun pam-schedule ()
-  (let* ((cards (directory-files "cards" nil "org$"))
-         (n-cards (length cards))
-         (today-gre (calendar-current-date))
-         (today-abs (calendar-absolute-from-gregorian today-gre))
-         (n-days (/ n-cards pam-new-cards-per-day))
-         (dates (mapcar #'calendar-gregorian-from-absolute
-                        (number-sequence today-abs (+ today-abs n-days)))))
-    (dolist (date dates)
-      (let ((file-name (format "pam-%d-%02d-%02d.org"
-                               (nth 2 date)
-                               (nth 0 date)
-                               (nth 1 date)))
-            (items (hydra-multipop cards pam-new-cards-per-day)))
-        (call-process-shell-command
-         (format "echo -e '%s' >> %s"
-                 (concat "#+STARTUP: nologdone\\n#+SEQ_TODO: TODO REVIEW | DONE(d)\\n"
-                         (mapconcat (lambda (s)
-                                      (format "* TODO [[file:cards/%s][%s]]" s
-                                              (car (split-string s "-"))))
-                                    items "\\n"))
-                 file-name))))))
-
 (defun pam-delete-card (file)
   (interactive (list (buffer-file-name)))
   (when (file-exists-p file)
