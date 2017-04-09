@@ -710,7 +710,7 @@ Otherwise, the repository will be in the same directory as the master file.")
 (defun pam-unschedule-card (card-file)
   "Unschedule CARD-FILE everywhere and schedule it for today."
   (let* ((repo-dir (locate-dominating-file card-file ".git"))
-         (s-files (pam-cmd-to-list (format "git grep --files-with-matches %s" card-file)
+         (s-files (pam-cmd-to-list (format "git add . && git grep --files-with-matches %s" card-file)
                                    repo-dir)))
     (dolist (file s-files)
       (with-current-buffer (find-file-noselect (expand-file-name file repo-dir))
