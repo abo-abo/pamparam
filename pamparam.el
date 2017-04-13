@@ -597,7 +597,15 @@ Otherwise, the repository will be in the same directory as the master file.")
             (kill-buffer b)))))))
 
 (defun pam-schedule-file (time)
-  (format-time-string "pam-%Y-%m-%d.org" time))
+  (let ((year (format-time-string "%Y" time))
+        (current-year (format-time-string "%Y" (current-time)))
+        (base (format-time-string "pam-%Y-%m-%d.org" time)))
+    (if (string= year current-year)
+        base
+      (let ((dir (expand-file-name year "years")))
+        (unless (file-exists-p dir)
+          (make-directory dir t))
+        (expand-file-name base year)))))
 
 (defun pam-todo-file (&optional offset)
   (setq offset (or offset 0))
