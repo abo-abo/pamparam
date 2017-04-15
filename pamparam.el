@@ -710,10 +710,12 @@ Otherwise, the repository will be in the same directory as the master file.")
                        "card"
                      "cards")))
     (message
-     (shell-command-to-string
-      (format
-       "git add . && git commit -m 'Do %s %s'"
-       card-count card-str)))))
+     (replace-regexp-in-string
+      "%" "%%"
+      (shell-command-to-string
+       (format
+        "git add . && git commit -m 'Do %s %s'"
+        card-count card-str))))))
 
 (defun pam-unschedule-card (card-file)
   "Unschedule CARD-FILE everywhere and schedule it for today."
