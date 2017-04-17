@@ -335,26 +335,29 @@ Otherwise, the repository will be in the same directory as the master file.")
     (delete-file file)
     (when (string= (buffer-file-name) file)
       (kill-buffer))
-    (let* ((default-directory (locate-dominating-file file ".git"))
-           (prev-file (file-name-nondirectory file))
-           (prev-scheduled
-            (split-string
-             (shell-command-to-string
-              (format "git grep %s" prev-file))
-             "\n" t))
-           (save-silently t))
-      (dolist (prev prev-scheduled)
-        (unless (string-match "\\`\\([^:]+\\):.*\\[\\[file:cards/\\(.*\\)\\]\\[.*\\]\\'" prev)
-          (user-error "Bad scheduled item: %s" prev))
-        (let ((sfile
-               (expand-file-name
-                (match-string 1 prev))))
-          (with-temp-buffer
-            (insert-file-contents sfile)
-            (when (re-search-forward prev-file nil t)
-              (delete-region (line-beginning-position)
-                             (1+ (line-end-position))))
-            (write-file sfile)))))))
+    (pam--update-card
+     (file-name-nondirectory file)
+     nil)))
+
+(defun pam--update-card (prev-file new-entry)
+  (let ((prev-scheduled (pam-cmd-to-list (format "git grep %s" prev-file)))
+        (save-silently t))
+    (dolist (prev prev-scheduled)
+      (unless (string-match "\\`\\([^:]+\\):.*\\[\\[file:cards/\\(.*\\)\\]\\[.*\\]\\'" prev)
+        (user-error "Bad scheduled item: %s" prev))
+      (let ((schedule-file
+             (expand-file-name
+              (match-string 1 prev)))
+            (entry (match-string 2 prev)))
+        (with-temp-buffer
+          (insert-file-contents schedule-file)
+          (when (re-search-forward entry nil t)
+            (if new-entry
+                (replace-match new-entry)
+              (delete-region
+               (line-beginning-position)
+               (1+ (line-end-position)))))
+          (write-file schedule-file))))))
 
 (defvar pam-git-items nil)
 
@@ -446,22 +449,8 @@ Otherwise, the repository will be in the same directory as the master file.")
               (point-min)
               (1+ (point)))))))
     (delete-file (expand-file-name prev-file repo-dir))
-    (let ((prev-scheduled
-           (pam-cmd-to-list (format "git grep %s" prev-file) repo-dir))
-          (save-silently t))
-      (dolist (prev prev-scheduled)
-        (unless (string-match "\\`\\([^:]+\\):.*\\[\\[file:cards/\\(.*\\)\\]\\[.*\\]\\'" prev)
-          (user-error "Bad scheduled item: %s" prev))
-        (let ((file
-               (expand-file-name
-                (match-string 1 prev)
-                repo-dir))
-              (entry (match-string 2 prev)))
-          (with-temp-buffer
-            (insert-file-contents file)
-            (when (re-search-forward entry nil t)
-              (replace-match (file-name-nondirectory card-file)))
-            (write-file file)))))
+    (let ((default-directory repo-dir))
+      (pam--update-card prev-file (file-name-nondirectory card-file)))
     old-metadata))
 
 (defun pam-update-card (card-front card-body repo-dir)
