@@ -159,7 +159,8 @@ Q - the quality of the answer:
 (defun pam--todo-from-file (card-file)
   (if (string-match "\\`\\([^-]+\\)-" card-file)
       (format
-       "* TODO [[file:cards/%s][%s]]\n"
+       "* TODO [[file:cards/%s/%s][%s]]\n"
+       (substring card-file 0 2)
        card-file
        (match-string 1 card-file))
     (error "unexpected file name")))
@@ -449,18 +450,20 @@ Otherwise, the repository will be in the same directory as the master file.")
               (point-min)
               (1+ (point)))))))
     (delete-file (expand-file-name prev-file repo-dir))
-    (let ((default-directory repo-dir))
-      (pam--update-card prev-file (file-name-nondirectory card-file)))
+    (let ((default-directory repo-dir)
+          (fnn (file-name-nondirectory card-file)))
+      (pam--update-card prev-file (concat (substring fnn 0 2) "/" fnn)))
     old-metadata))
 
 (defun pam-update-card (card-front card-body repo-dir)
   (let* ((card-id (md5 card-front))
+         (card-id (concat (substring card-id 0 2) "/" card-id))
          (card-file (concat "cards/" card-id "-"
                             (md5 card-body)
                             ".org"))
          (prev-file
           (gethash card-id pam-git-items))
-         (metadata))
+         (metadata nil))
     (cond ((null prev-file))
           ((string= card-file prev-file))
           (t
