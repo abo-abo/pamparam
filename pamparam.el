@@ -602,10 +602,11 @@ Otherwise, the repository will be in the same directory as the master file.")
         (base (format-time-string "pam-%Y-%m-%d.org" time)))
     (if (string= year current-year)
         base
-      (let ((dir (expand-file-name year "years")))
+      (let ((dir (expand-file-name
+                  year (expand-file-name "years" (pam-default-directory)))))
         (unless (file-exists-p dir)
           (make-directory dir t))
-        (expand-file-name base year)))))
+        (expand-file-name base dir)))))
 
 (defun pam-todo-file (&optional offset)
   (setq offset (or offset 0))
