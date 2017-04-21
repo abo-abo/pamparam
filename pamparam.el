@@ -479,7 +479,9 @@ Otherwise, the repository will be in the same directory as the master file.")
                        card-front
                        card-body)
                t t))
-             (cmd (format "echo -e '%s' > %s"
+             (cmd (format "mkdir -p '%s' && echo -e '%s' > %s"
+                          (expand-file-name (substring card-id 0 2)
+                                            (expand-file-name "cards" repo-dir))
                           txt (expand-file-name card-file repo-dir))))
         (if (= 0 (call-process-shell-command cmd))
             (cons (if metadata
