@@ -469,11 +469,8 @@ Otherwise, the repository will be in the same directory as the master file.")
          (subdir (substring card-front-id 0 2))
          (card-file
           (concat
-           "cards/"
-           subdir "/"
-           card-front-id "-"
-           card-body-id
-           ".org"))
+           "cards/" subdir "/" card-front-id "-" card-body-id ".org"))
+         (full-card-file (expand-file-name card-file repo-dir))
          (metadata nil))
     (cond ((null prev-file))
           ((string= card-file prev-file))
@@ -491,9 +488,8 @@ Otherwise, the repository will be in the same directory as the master file.")
                        card-body)
                t t))
              (cmd (format "mkdir -p '%s' && echo -e '%s' > %s"
-                          (expand-file-name (substring card-front-id 0 2)
-                                            (expand-file-name "cards" repo-dir))
-                          txt (expand-file-name card-file repo-dir))))
+                          (file-name-directory full-card-file)
+                          txt full-card-file)))
         (if (= 0 (call-process-shell-command cmd))
             (cons (if metadata
                       'update
