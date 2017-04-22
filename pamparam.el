@@ -360,7 +360,8 @@ Otherwise, the repository will be in the same directory as the master file.")
                (1+ (line-end-position)))))
           (write-file schedule-file))))))
 
-(defvar pam-git-items nil)
+(defvar pam-hash-card-name->file nil)
+(defvar pam-hash-card-body->file nil)
 
 (defun pam-cmd-to-list (cmd &optional directory)
   (let ((default-directory (or directory default-directory)))
@@ -432,12 +433,15 @@ Otherwise, the repository will be in the same directory as the master file.")
     (goto-char (point-max))))
 
 (defun pam--recompute-git-cards (repo-dir)
-  (setq pam-git-items (make-hash-table :test 'equal))
+  (setq pam-hash-card-name->file (make-hash-table :test 'equal))
+  (setq pam-hash-card-body->file (make-hash-table :test 'equal))
   (let ((git-files (pam-cards repo-dir)))
     (dolist (gf git-files)
-      (if (string-match "\\`cards/\\([^-]+\\)-" gf)
-          (puthash (match-string 1 gf) gf pam-git-items)
-        (error "unexpected")))))
+      (if (string-match "\\`cards/[0-9a-f]\\{2\\}/\\([^-]+\\)-\\([^.]+\\)\\.org\\'" gf)
+          (progn
+            (puthash (match-string 1 gf) gf pam-hash-card-name->file)
+            (puthash (match-string 2 gf) gf pam-hash-card-body->file))
+        (error "unexpected file name %s" gf)))))
 
 (defun pam--replace-card (_card-front _card-body repo-dir card-file prev-file)
   (let ((old-metadata
@@ -456,13 +460,20 @@ Otherwise, the repository will be in the same directory as the master file.")
     old-metadata))
 
 (defun pam-update-card (card-front card-body repo-dir)
-  (let* ((card-id (md5 card-front))
-         (card-id (concat (substring card-id 0 2) "/" card-id))
-         (card-file (concat "cards/" card-id "-"
-                            (md5 card-body)
-                            ".org"))
+  (let* ((card-front-id (md5 card-front))
+         (card-body-id (md5 card-body))
          (prev-file
-          (gethash card-id pam-git-items))
+          (or
+           (gethash card-front-id pam-hash-card-name->file)
+           (gethash card-body-id pam-hash-card-body->file)))
+         (subdir (substring card-front-id 0 2))
+         (card-file
+          (concat
+           "cards/"
+           subdir "/"
+           card-front-id "-"
+           card-body-id
+           ".org"))
          (metadata nil))
     (cond ((null prev-file))
           ((string= card-file prev-file))
@@ -480,7 +491,7 @@ Otherwise, the repository will be in the same directory as the master file.")
                        card-body)
                t t))
              (cmd (format "mkdir -p '%s' && echo -e '%s' > %s"
-                          (expand-file-name (substring card-id 0 2)
+                          (expand-file-name (substring card-front-id 0 2)
                                             (expand-file-name "cards" repo-dir))
                           txt (expand-file-name card-file repo-dir))))
         (if (= 0 (call-process-shell-command cmd))
