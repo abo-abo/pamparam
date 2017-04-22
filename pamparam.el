@@ -500,6 +500,16 @@ Otherwise, the repository will be in the same directory as the master file.")
 (defconst pam-card-source-regexp "^\\* .*:cards:")
 
 (defun pam-sync ()
+  "Synchronize the current `org-mode' master file to the cards repository.
+
+Create the cards repository if it doesn't exist.
+
+Each card is uniquely identifiable by either its front or its
+back. So if you want to modify both the front and the back, first
+modify the front, call `pam-sync', then modify the back and call
+`pam-sync' again. Otherwise, there's no way to \"connect\" the
+new card to the old one, and the old card will remain in the
+repository, while the new card will start with empty metadata."
   (interactive)
   (unless (eq major-mode 'org-mode)
     (error "Must be in `org-mode' file"))
