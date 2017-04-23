@@ -634,19 +634,20 @@ repository, while the new card will start with empty metadata."
 (defun pam-todo-file (&optional offset)
   (setq offset (or offset 0))
   (let* ((default-directory (pam-default-directory))
-         (todo-file (pam-schedule-file
-                     (time-add
-                      (current-time)
-                      (days-to-time offset))))
+         (todo-file (expand-file-name
+                     (pam-schedule-file
+                      (time-add
+                       (current-time)
+                       (days-to-time offset)))))
          (save-silently t))
     (unless (file-exists-p todo-file)
-      (find-file-literally todo-file)
-      (insert "#+SEQ_TODO: TODO REVIEW | DONE\n")
-      (when (eq offset 0)
-        (pam-pull 10 (current-buffer))
-        (message "Schedule was empty, used `pam-pull' for 10 cards"))
-      (pam-save-buffer)
-      (kill-buffer))
+      (save-current-buffer
+        (find-file todo-file)
+        (insert "#+SEQ_TODO: TODO REVIEW | DONE\n")
+        (when (eq offset 0)
+          (pam-pull 10 (current-buffer))
+          (message "Schedule was empty, used `pam-pull' for 10 cards"))
+        (pam-save-buffer)))
     (find-file-noselect todo-file)))
 
 (defvar pam-last-rechedule nil)
@@ -669,7 +670,8 @@ repository, while the new card will start with empty metadata."
       (let* ((today-file (pam-todo-file))
              (today-file-name (file-name-nondirectory
                                (buffer-file-name today-file)))
-             (pdir (pam-default-directory))
+             (pdir (file-name-directory
+                    (buffer-file-name today-file)))
              (all-files (directory-files pdir nil "org$"))
              (idx (cl-position today-file-name all-files
                                :test 'equal))
