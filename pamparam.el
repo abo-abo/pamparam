@@ -26,6 +26,7 @@
 ;;* Requires
 (require 'worf)
 (require 'lispy)
+(require 'hydra)
 
 ;;* Pure
 (defun pam-sm2 (card-stats q)
@@ -808,5 +809,15 @@ If you have no more cards scheduled for today, use `pam-pull'."
       (pam-card-mode -1))))
 
 (lispy-raise-minor-mode 'pam-card-mode)
+
+;;* `hydra-pam'
+(defhydra hydra-pam (:exit t)
+  "pam"
+  ("d" pam-drill "drill")
+  ("s" pam-sync "sync")
+  ("p" pam-pull "pull")
+  ("c" pam-commit "commit")
+  ("q" nil "quit"))
+(hydra-set-property 'hydra-pam :verbosity 1)
 
 (provide 'pamparam)
