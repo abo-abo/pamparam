@@ -33,8 +33,9 @@ git clone https://github.com/abo-abo/pamparam
    Finally, if you enter a wrong answer, you get a score of 0.
 
 4. Theoretically, you can stop here with 1/10 cards done. Resume at
-   any later stage with =pam-drill=. Or press ~n~ (calls =pam-drill=) to select
-   the next card.
+   any later stage with =pam-drill=. Or press ~n~ (calls =pam-drill=) to
+   select the next card. Any cards scheduled today but not finished
+   will carry over to tomorrow.
 
 Assuming you finished all 10 cards, what's next?
 
@@ -108,6 +109,50 @@ With this example, let's get the terminology out of the way:
      =pam-alist= for a way to connect a master file to a repo that's not
      in the same directory.
 
+** Master file example
+A master file is an Org-mode file with things you want to learn.
+
+One simple example is provided in [[file:doc/sets/capitals/capitals.org][capitals.org]].
+
+Here's another, slightly more elaborate, example, which I use for
+learning Dutch:
+#+begin_src org
+,* Cards            :cards:
+,** comic story
+het stripverhal
+,*** The Adventures of Tintin is a world famous Belgian comic strip.
+De Avonturen van Kuifje is een wereldbekend Belgisch stripverhaal.
+
+,** singer
+de zanger
+de zangeres
+,*** The singer is only know on in Belgium.
+De zangeres is alleen in België bekend.
+#+end_src
+
+The format of the master file is fairly straightforward:
+
+1. There needs to be one or more card sources - first level outlines
+   marked with the =:cards:= tag. A separate card file will be created
+   for every second or third level child of each card source. In the
+   example above, four cards will be created.
+
+2. For each second or third level outline, the heading name is the
+   question and the heading body is the answer. I usually put e.g. a
+   noun or a verb into the second level, and a more elaborate example
+   of using that noun or a verb into the child third level. I also
+   like to organize the words by generation rules and thematically, so
+   that e.g. =honest= will be close to =modest= and very close to =honesty=.
+
+   The only hard and enforced requirement is that all heading names
+   must be unique.
+3. If a word has many correct possibilities (like =de zanger= and =de
+   zangeres= both mean =singer=), I put each on its own line. This allows
+   to enter either synonym during validation.
+
+The master file is a great summary of the info that you have
+available. It's easy to search and organize.
+
 ** Card file example
 A card file looks like this:
 #+begin_src org
@@ -126,7 +171,7 @@ The first heading holds all the metadata, like:
 
 - all times and scores when you did a card
 - your wrong answers, if any
-- an estimate card's ease
+- an estimate of the card's ease
 
 The second heading's name is the card's front, the question. The
 second heading's body is the anwer, it starts out hidden.
@@ -139,8 +184,8 @@ second heading's body is the anwer, it starts out hidden.
 |     3 | perfect answer, body revealed                                        |
 |     0 | wrong answer                                                         |
 
-On the first try, you can get either 5 or 3 or 0. Unless you get 5, you
-have to =REVIEW= the card today.
+On the first try, you can get either a 5 or a 3 or a 0. Unless you get
+a 5, you have to =REVIEW= the card today.
 
 You can use =pam-card-redo= if you make a mechanical typo and get a 0,
 even though you knew the card. If you manage to correct the typo, you
@@ -152,7 +197,8 @@ the body hidden.
 
 ** Commands and key bindings
 Certain commands are applicable only in certain types of files. There
-are 3 types of files, all of which use =org-mode=: master, card and schedule.
+are 3 types of files, all of which use =org-mode=: master, card and
+schedule.
 
 *** Card file
 Global bindings:
