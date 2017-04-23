@@ -407,17 +407,20 @@ When called interactively, delete the card in the current buffer."
       (kill-buffer))))
 
 (defun pam-pull (arg)
-  "Pull ARG cards into the current schedule file."
+  "Pull ARG cards into today's schedule file."
   (interactive "p")
-  (let ((sched-file (file-name-nondirectory (buffer-file-name)))
+  (let ((sched-file (pam-todo-file))
         (save-silently t)
         cards)
-    (unless (string-match "^pam-.*org$" sched-file)
-      (user-error "pull only when in a schedule file"))
     (when (= arg 1)
       (setq arg (read-number "how many cards: ")))
     (setq arg (min 100 arg))
-    (with-current-buffer (find-file "pampile.org")
+    (switch-to-buffer sched-file)
+    (with-current-buffer (find-file
+                          (expand-file-name
+                           "pampile.org"
+                           (file-name-directory
+                            (buffer-file-name sched-file))))
       (goto-char (point-min))
       (end-of-line arg)
       (setq cards (pam-delete-region (point-min)
