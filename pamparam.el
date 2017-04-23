@@ -714,10 +714,13 @@ repository, while the new card will start with empty metadata."
   (interactive)
   (let* ((default-directory (locate-dominating-file (or (buffer-file-name)
                                                         default-directory) ".git"))
+         (status (pam-cmd-to-list "git status"))
          (card-count
           (cl-count-if
-           (lambda (s) (string-match "modified.*cards/" s))
-           (pam-cmd-to-list "git status")))
+           (lambda (s)
+             (or (string-match "modified.*cards/" s)
+                 (string-match "new file.*cards/" s)))
+           status))
          (card-str (if (= card-count 1)
                        "card"
                      "cards")))
