@@ -6,7 +6,7 @@
 ;; URL: https://github.com/abo-abo/pamparam
 ;; Version: 0.0.0
 ;; Package-Requires: ((emacs "24.3") (lispy "0.26.0") (worf "0.1.0"))
-;; Keywords: flashcards, memory
+;; Keywords: outlines, hypermedia, flashcards, memory
 
 ;; This file is not part of GNU Emacs
 
@@ -23,6 +23,14 @@
 ;; For a full copy of the GNU General Public License
 ;; see <http://www.gnu.org/licenses/>.
 
+;;; Commentary:
+;;
+;; An example master file is given in doc/sets/capitals/capitals.org.
+;; Use `hydra-pam/body' as the entry point.
+;; See README.org for more info.
+
+;;; Code:
+
 ;;* Requires
 (require 'worf)
 (require 'lispy)
@@ -35,7 +43,7 @@
 CARD-STATS is (EASE-FACTOR . INTERVALS), the result has the
 same shape, with updated values.
 
-EASE-FACTOR - the previous ease factor of the card. All cards are
+EASE-FACTOR - the previous ease factor of the card.  All cards are
 initialized with EASE-FACTOR of 2.5.  It will decrease for
 difficult cards, but not below 1.3.
 
@@ -147,13 +155,13 @@ Q - the quality of the answer:
              (pam-save-buffer))
            (pam-save-buffer))
           ((string= state "DONE")
-           (if (y-or-n-p "Card already done today. Re-rate?")
+           (if (y-or-n-p "Card already done today.  Re-rate? ")
                (pam--card-score score t actual-answer)
              (user-error "This card is already done today")))
           ((string= state "TODO")
            (pam--card-score score nil actual-answer))
           (t
-           (user-error "unexpected state: %s" state)))
+           (user-error "Unexpected state: %s" state)))
     (outline-show-all)))
 
 (defun pam--todo-from-file (card-file)
@@ -163,7 +171,7 @@ Q - the quality of the answer:
        (substring card-file 0 2)
        card-file
        (match-string 1 card-file))
-    (error "unexpected file name")))
+    (error "Unexpected file name")))
 
 (defun pam--card-score (score &optional already-done actual-answer)
   (let ((card-file (file-name-nondirectory (buffer-file-name)))
@@ -186,7 +194,7 @@ Q - the quality of the answer:
                     (beginning-of-line)
                     (if (looking-at "\\* \\(TODO\\|REVIEW\\)")
                         (replace-match "DONE" nil nil nil 1)
-                      (error "unexpected")))
+                      (error "Unexpected")))
                 (setq str (buffer-substring-no-properties
                            (+ 7 (line-beginning-position))
                            (1+ (line-end-position))))
@@ -313,7 +321,7 @@ Otherwise, the repository will be in the same directory as the master file.")
                   "doc/sets/capitals/capitals.pam"
                   (file-name-directory pam-load-file-name))
   "Point to a default repository. In case you call `pam-drill'
-  while not in any repo, this repo will be selected.")
+while not in any repo, this repo will be selected.")
 
 ;;* Schedule files
 (defun pam-repo-directory (file)
@@ -334,7 +342,7 @@ When called interactively, delete the card in the current buffer."
   (interactive (list (buffer-file-name)))
   (when (and (file-exists-p file)
              (y-or-n-p
-              (format "Really delete %s?"
+              (format "Really delete %s? "
                       (file-name-nondirectory file))))
     (delete-file file)
     (when (string= (buffer-file-name) file)
@@ -448,7 +456,7 @@ When called interactively, delete the card in the current buffer."
           (progn
             (puthash (match-string 1 gf) gf pam-hash-card-name->file)
             (puthash (match-string 2 gf) gf pam-hash-card-body->file))
-        (error "unexpected file name %s" gf)))))
+        (error "Unexpected file name %s" gf)))))
 
 (defun pam--replace-card (_card-front _card-body repo-dir card-file prev-file)
   (let ((old-metadata
@@ -512,9 +520,9 @@ When called interactively, delete the card in the current buffer."
 Create the cards repository if it doesn't exist.
 
 Each card is uniquely identifiable by either its front or its
-back. So if you want to modify both the front and the back, first
+back.  So if you want to modify both the front and the back, first
 modify the front, call `pam-sync', then modify the back and call
-`pam-sync' again. Otherwise, there's no way to \"connect\" the
+`pam-sync' again.  Otherwise, there's no way to \"connect\" the
 new card to the old one, and the old card will remain in the
 repository, while the new card will start with empty metadata."
   (interactive)
@@ -726,7 +734,7 @@ If you have no more cards scheduled for today, use `pam-pull'."
       (pam-card-mode))))
 
 (defun pam-commit ()
-  "Commit the current progress using Git"
+  "Commit the current progress using Git."
   (interactive)
   (let* ((default-directory (pam-default-directory))
          (status (pam-cmd-to-list "git status"))
@@ -781,7 +789,7 @@ If you have no more cards scheduled for today, use `pam-pull'."
         (pam-unschedule-card (file-name-nondirectory fname))
         (setq-local pam-is-redo t)
         (pam-card-mode))
-    (user-error "applies only to card files")))
+    (user-error "Applies only to card files")))
 
 ;;* `pam-card-mode'
 (defvar pam-card-mode-map
@@ -821,3 +829,5 @@ If you have no more cards scheduled for today, use `pam-pull'."
 (hydra-set-property 'hydra-pam :verbosity 1)
 
 (provide 'pamparam)
+
+;;; pamparam.el ends here
