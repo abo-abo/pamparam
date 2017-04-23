@@ -50,9 +50,9 @@ structure.
 3. ./pampile.org holds all cards that you haven't touched
    once. =pam-sync= adds to this file, =pam-pull= removes from it.
 4. ./pam-YYYY-MM-DD.org holds the cards scheduled for the
-   corresponding day. The dates are current day plus future, past days
-   are removed. If you miss items on their designated day, they are
-   moved to the front of today's items.
+   corresponding day. The dates are for today and future days: past
+   days are removed. If you miss items on their designated day, they
+   are moved to the front of today's items.
 *** Step 3
 Call =pam-drill= from any file inside the Git repository.
 **** optional

@@ -118,7 +118,6 @@ Q - the quality of the answer:
   (write-file (buffer-file-name)))
 
 (defun pam-card-score (score &optional actual-answer)
-  (interactive)
   (let* ((card-file (file-name-nondirectory (buffer-file-name)))
          (state (with-current-buffer (pam-todo-file)
                   (goto-char (point-min))
@@ -205,24 +204,11 @@ Q - the quality of the answer:
             (kill-buffer))))
       (pam-save-buffer))))
 
-(defun pam-card-score-1 ()
-  (interactive)
-  (pam-card-score 0))
-
-(defun pam-card-score-2 ()
-  (interactive)
-  (pam-card-score 3))
-
-(defun pam-card-score-3 ()
-  (interactive)
-  (pam-card-score 5))
-
 (defvar-local pam-card-answer-validate-p nil)
 
 (defun pam-card-answer ()
   "Answer the current card.
 Enter the answer at point, then press \".\" to validate."
-  (interactive)
   (goto-char (point-min))
   (when (re-search-forward "^\\* m$" nil t)
     (delete-region (point-min) (match-beginning 0)))
@@ -234,6 +220,10 @@ Enter the answer at point, then press \".\" to validate."
 (defvar pam-is-redo nil)
 
 (defun pam-card-validate-maybe (&optional arg)
+  "Validate the given answer and score the current card.
+
+The given answer is the text between the card's first heading and
+point."
   (interactive "p")
   (if pam-card-answer-validate-p
       (let ((tans (save-excursion
@@ -315,7 +305,14 @@ When SB has multiple lines, SA may match one of them."
   "Map a master file to the corresponding repository.
 Otherwise, the repository will be in the same directory as the master file.")
 
-(defvar pam-path "/home/oleh/Dropbox/source/site-lisp/git/dutch.pam")
+(defvar pam-load-file-name (or load-file-name
+                               (buffer-file-name)))
+
+(defvar pam-path (expand-file-name
+                  "doc/sets/capitals/capitals.pam"
+                  (file-name-directory pam-load-file-name))
+  "Point to a default repository. In case you call `pam-drill'
+  while not in any repo, this repo will be selected.")
 
 ;;* Schedule files
 (defun pam-repo-directory (file)
@@ -330,9 +327,14 @@ Otherwise, the repository will be in the same directory as the master file.")
 
 (defvar pam-new-cards-per-day 75)
 
-(defun pam-delete-card (file)
+(defun pam-card-delete (file)
+  "Delete the card in FILE.
+When called interactively, delete the card in the current buffer."
   (interactive (list (buffer-file-name)))
-  (when (file-exists-p file)
+  (when (and (file-exists-p file)
+             (y-or-n-p
+              (format "Really delete %s?"
+                      (file-name-nondirectory file))))
     (delete-file file)
     (when (string= (buffer-file-name) file)
       (kill-buffer))
@@ -405,6 +407,7 @@ Otherwise, the repository will be in the same directory as the master file.")
       (kill-buffer))))
 
 (defun pam-pull (arg)
+  "Pull ARG cards into the current schedule file."
   (interactive "p")
   (let ((sched-file (file-name-nondirectory (buffer-file-name)))
         (save-silently t)
@@ -677,6 +680,14 @@ repository, while the new card will start with empty metadata."
 
 ;;;###autoload
 (defun pam-drill ()
+  "Start a learning session.
+
+When `default-directory' is in a *.pam repository, use that repository.
+Otherwise, use the repository that `pam-path' points to.
+
+See `pam-sync' for creating and updating a *.pam repository.
+
+If you have no more cards scheduled for today, use `pam-pull'."
   (interactive)
   (pam-reschedule-maybe)
   (let (card-link card-file)
@@ -711,6 +722,7 @@ repository, while the new card will start with empty metadata."
       (pam-card-mode))))
 
 (defun pam-commit ()
+  "Commit the current progress using Git"
   (interactive)
   (let* ((default-directory (locate-dominating-file (or (buffer-file-name)
                                                         default-directory) ".git"))
@@ -755,7 +767,7 @@ repository, while the new card will start with empty metadata."
         (goto-char (point-max)))
       (insert (pam--todo-from-file card-file)))))
 
-(defun pam-redo ()
+(defun pam-card-redo ()
   "Redo the current card without penalty."
   (interactive)
   (if (string-match-p "cards/.*org\\'" (buffer-file-name))
@@ -772,17 +784,11 @@ repository, while the new card will start with empty metadata."
 (defvar pam-card-mode-map
   (let ((map (make-sparse-keymap)))
     (worf-define-key map (kbd "q") 'bury-buffer)
-    (worf-define-key map (kbd "a") 'pam-card-answer
+    (worf-define-key map (kbd "R") 'pam-card-redo
                      :break t)
-    (worf-define-key map (kbd "R") 'pam-redo
-                     :break t)
-    (worf-define-key map (kbd "C") 'pam-commit)
-    (worf-define-key map (kbd "r") 'org-cycle)
-    (worf-define-key map (kbd "1") 'pam-card-score-1)
-    (worf-define-key map (kbd "2") 'pam-card-score-2)
-    (worf-define-key map (kbd "3") 'pam-card-score-3)
     (worf-define-key map (kbd "n") 'pam-drill
                      :break t)
+    (worf-define-key map (kbd "D") 'pam-card-delete)
     (define-key map (kbd ".") 'pam-card-validate-maybe)
     map))
 
