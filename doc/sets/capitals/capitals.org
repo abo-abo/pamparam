@@ -1,0 +1,72 @@
+* European countries/capitals by population                                              :cards:
+https://en.wikipedia.org/wiki/List_of_European_countries_by_population
+** Germany
+Berlin
+** France
+Paris
+** United Kingdom
+London
+** Italy
+Rome
+** Spain
+Madrid
+** Ukraine
+Kiev
+** Poland
+Warsaw
+** Romania
+Bucharest
+** Netherlands
+Amsterdam
+** Belgium
+Brussels
+** Greece
+Athens
+** Czech Republic
+Prague
+** Portugal
+Lisbon
+** Sweden
+Stockholm
+** Hungary
+Budapest
+** Belarus
+Minsk
+** Austria
+Vienna
+** Switzerland
+Bern
+** Bulgaria
+Sofia
+** Serbia
+Belgrade
+** Denmark
+Copenhagen
+** Finland
+Helsinki
+** Slovakia
+Bratislava
+** Norway
+Oslo
+** Ireland
+Dublin
+** Croatia
+Zagreb
+** Bosnia and Herzegovina
+Sarajevo
+** Moldova
+Kishinev
+** Lithuania
+Vilnius
+** Albania
+Tirana
+** Macedonia
+Skopje
+** Slovenia
+Ljubljana
+** Latvia
+Riga
+** Kosovo
+Pristina
+** Estonia
+Tallinn
