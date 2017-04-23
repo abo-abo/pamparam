@@ -218,3 +218,31 @@ order of importance:
 | pam-drill  |
 | pam-pull   |
 | pam-commit |
+
+* Customization
+While it's possible to have multiple repos, currently I have only a
+single one. In my case, it's not convenient to keep the repo =dutch.pam=
+in the same directory as the master file =dutch.org=. So I use this
+setting:
+
+#+begin_src elisp
+(setq pam-alist
+      '(("/home/oleh/Dropbox/org/wiki/dutch.org"
+         . "/home/oleh/Dropbox/source/site-lisp/git/dutch.pam")))
+#+end_src
+
+=pam-drill= doesn't know where your repos are located. It can only
+determine if the current buffer's file belongs to a repo or not.  In
+case it does, the current repo is used. Otherwise, the default repo is
+used which is pointed to by =pam-path=.
+
+By default, =pam-path= points to the repo of the provided example master
+file. Here's my custom setting:
+#+begin_src elisp
+(setq pam-path "/home/oleh/Dropbox/source/site-lisp/git/dutch.pam")
+#+end_src
+
+Finally, you can have all key bindings in one place with a hydra:
+#+begin_src elisp
+(global-set-key (kbd "C-c m") 'hydra-pam/body)
+#+end_src
