@@ -727,8 +727,7 @@ If you have no more cards scheduled for today, use `pam-pull'."
 (defun pam-commit ()
   "Commit the current progress using Git"
   (interactive)
-  (let* ((default-directory (locate-dominating-file (or (buffer-file-name)
-                                                        default-directory) ".git"))
+  (let* ((default-directory (pam-default-directory))
          (status (pam-cmd-to-list "git status"))
          (card-count
           (cl-count-if
