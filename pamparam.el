@@ -415,21 +415,18 @@ When called interactively, delete the card in the current buffer."
       (pam-save-buffer)
       (kill-buffer))))
 
-(defun pam-pull (arg)
-  "Pull ARG cards into today's schedule file."
-  (interactive "p")
-  (let ((sched-file (pam-todo-file))
-        (save-silently t)
+(defun pam-pull (arg &optional buffer)
+  "Pull ARG cards into BUFFER.
+When called interactively, use today's schedule file."
+  (interactive
+   (list (read-number "how many cards: ")
+         (pam-todo-file)))
+  (let ((save-silently t)
         cards)
-    (when (= arg 1)
-      (setq arg (read-number "how many cards: ")))
     (setq arg (min 100 arg))
-    (switch-to-buffer sched-file)
-    (with-current-buffer (find-file
-                          (expand-file-name
-                           "pampile.org"
-                           (file-name-directory
-                            (buffer-file-name sched-file))))
+    (switch-to-buffer buffer)
+    (with-current-buffer (find-file-noselect
+                          (expand-file-name "pampile.org"))
       (goto-char (point-min))
       (end-of-line arg)
       (setq cards (pam-delete-region (point-min)
@@ -636,17 +633,17 @@ repository, while the new card will start with empty metadata."
 
 (defun pam-todo-file (&optional offset)
   (setq offset (or offset 0))
-  (let ((default-directory (pam-default-directory))
-        (todo-file (pam-schedule-file
-                    (time-add
-                     (current-time)
-                     (days-to-time offset))))
-        (save-silently t))
+  (let* ((default-directory (pam-default-directory))
+         (todo-file (pam-schedule-file
+                     (time-add
+                      (current-time)
+                      (days-to-time offset))))
+         (save-silently t))
     (unless (file-exists-p todo-file)
       (find-file-literally todo-file)
       (insert "#+SEQ_TODO: TODO REVIEW | DONE\n")
       (when (eq offset 0)
-        (pam-pull 10)
+        (pam-pull 10 (current-buffer))
         (message "Schedule was empty, used `pam-pull' for 10 cards"))
       (pam-save-buffer)
       (kill-buffer))
