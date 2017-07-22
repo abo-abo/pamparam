@@ -352,7 +352,7 @@ When called interactively, delete the card in the current buffer."
      nil)))
 
 (defun pamparam--update-card (prev-file new-entry)
-  (let ((prev-scheduled (pamparam-cmd-to-list (format "git grep %s" prev-file)))
+  (let ((prev-scheduled (pamparam-cmd-to-list (format "git grep %s" (shell-quote-argument prev-file))))
         (save-silently t))
     (dolist (prev prev-scheduled)
       (unless (string-match "\\`\\([^:]+\\):.*\\[\\[file:cards/\\(.*\\)\\]\\[.*\\]\\'" prev)
@@ -499,9 +499,10 @@ When called interactively, use today's schedule file."
                        card-front
                        card-body)
                t t))
-             (cmd (format "mkdir -p '%s' && echo -e '%s' > %s"
-                          (file-name-directory full-card-file)
-                          txt full-card-file)))
+             (cmd (format "mkdir -p %s && echo -e %s > %s"
+                          (shell-quote-argument (file-name-directory full-card-file))
+                          (shell-quote-argument txt)
+                          (shell-quote-argument full-card-file))))
         (if (= 0 (call-process-shell-command cmd))
             (cons (if metadata
                       'update
@@ -548,8 +549,8 @@ repository, while the new card will start with empty metadata."
       (beginning-of-line)
       (while (re-search-forward pamparam-card-source-regexp nil t)
         (lispy-destructuring-setq (processed-headings new-cards updated-cards)
-            (pamparam-sync-current-outline
-             processed-headings new-cards updated-cards repo-dir)))
+                                  (pamparam-sync-current-outline
+                                   processed-headings new-cards updated-cards repo-dir)))
       (goto-char old-point)
       (when (or new-cards updated-cards)
         (pamparam-schedule-today
@@ -560,15 +561,16 @@ repository, while the new card will start with empty metadata."
         (shell-command-to-string
          (format
           "cd %s && git add . && git commit -m %s"
-          repo-dir
-          (cond ((null updated-cards)
-                 (format "'Add %d new card(s)'" (length new-cards)))
-                ((null new-cards)
-                 (format "'Update %d card(s)'" (length updated-cards)))
-                (t
-                 (format "'Add %d new card(s), update %d cards'"
-                         (length new-cards)
-                         (length updated-cards)))))))
+          (shell-quote-argument repo-dir)
+          (shell-quote-argument
+           (cond ((null updated-cards)
+                  (format "Add %d new card(s)" (length new-cards)))
+                 ((null new-cards)
+                  (format "Update %d card(s)" (length updated-cards)))
+                 (t
+                  (format "Add %d new card(s), update %d cards"
+                          (length new-cards)
+                          (length updated-cards))))))))
       (message "%d new cards, %d updated, %d total"
                (length new-cards)
                (length updated-cards)
@@ -757,8 +759,8 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
 (defun pamparam-unschedule-card (card-file)
   "Unschedule CARD-FILE everywhere and schedule it for today."
   (let* ((repo-dir (locate-dominating-file card-file ".git"))
-         (s-files (pamparam-cmd-to-list (format "git add . && git grep --files-with-matches %s" card-file)
-                                   repo-dir)))
+         (s-files (pamparam-cmd-to-list (format "git add . && git grep --files-with-matches %s" (shell-quote-argument card-file))
+                                        repo-dir)))
     (dolist (file s-files)
       (with-current-buffer (find-file-noselect (expand-file-name file repo-dir))
         (save-excursion
@@ -783,7 +785,7 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
   (if (string-match-p "cards/.*org\\'" (buffer-file-name))
       (let ((fname (buffer-file-name)))
         (pamparam-save-buffer)
-        (pamparam-cmd-to-list (format "git checkout -- %s" fname))
+        (pamparam-cmd-to-list (format "git checkout -- %s" (shell-quote-argument fname)))
         (revert-buffer nil t nil)
         (pamparam-unschedule-card (file-name-nondirectory fname))
         (setq-local pamparam-is-redo t)
