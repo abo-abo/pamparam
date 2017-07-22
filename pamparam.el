@@ -26,7 +26,7 @@
 ;;; Commentary:
 ;;
 ;; An example master file is given in doc/sets/capitals/capitals.org.
-;; Use `hydra-pam/body' as the entry point.
+;; Use `hydra-pamparam/body' as the entry point.
 ;; See README.org for more info.
 
 ;;; Code:
@@ -37,7 +37,7 @@
 (require 'hydra)
 
 ;;* Pure
-(defun pam-sm2 (card-stats q)
+(defun pamparam-sm2 (card-stats q)
   "Determine the next iteration of CARD-STATS based on Q.
 
 CARD-STATS is (EASE-FACTOR . INTERVALS), the result has the
@@ -72,7 +72,7 @@ Q - the quality of the answer:
              intervals)))))
 
 ;;* Card files
-(defun pam-card-insert-score (score actual-answer)
+(defun pamparam-card-insert-score (score actual-answer)
   "Insert SCORE into the current card file."
   (goto-char (point-min))
   (outline-show-all)
@@ -89,7 +89,7 @@ Q - the quality of the answer:
                   (or actual-answer "")))
   (org-table-align))
 
-(defun pam-card-read-stats ()
+(defun pamparam-card-read-stats ()
   (goto-char (point-min))
   (if (re-search-forward "^\\*\\* stats\n" nil t)
       (let ((beg (point))
@@ -114,21 +114,21 @@ Q - the quality of the answer:
           (list 2.5))
       (error "** scores not found"))))
 
-(defun pam-card-insert-stats (stats)
+(defun pamparam-card-insert-stats (stats)
   (insert (format "(setq ease-factor %f)\n" (car stats)))
   (insert (format "(setq intervals '%S)" (cdr stats))))
 
-(defun pam-delete-region (beg end)
+(defun pamparam-delete-region (beg end)
   (let ((str (buffer-substring-no-properties beg end)))
     (delete-region beg end)
     str))
 
-(defun pam-save-buffer ()
+(defun pamparam-save-buffer ()
   (write-file (buffer-file-name)))
 
-(defun pam-card-score (score &optional actual-answer)
+(defun pamparam-card-score (score &optional actual-answer)
   (let* ((card-file (file-name-nondirectory (buffer-file-name)))
-         (state (with-current-buffer (pam-todo-file)
+         (state (with-current-buffer (pamparam-todo-file)
                   (goto-char (point-min))
                   (search-forward card-file)
                   (goto-char (+ 2 (line-beginning-position)))
@@ -139,7 +139,7 @@ Q - the quality of the answer:
                      (point)))))
          (save-silently t))
     (cond ((string= state "REVIEW")
-           (with-current-buffer (pam-todo-file)
+           (with-current-buffer (pamparam-todo-file)
              (goto-char (point-min))
              (search-forward card-file)
              (if (or (= score 5)
@@ -147,24 +147,24 @@ Q - the quality of the answer:
                      (= score 3))
                  (let ((org-log-done nil))
                    (org-todo 'done))
-               (let ((item (pam-delete-region
+               (let ((item (pamparam-delete-region
                             (line-beginning-position)
                             (1+ (line-end-position)))))
                  (goto-char (point-max))
                  (insert item)))
-             (pam-save-buffer))
-           (pam-save-buffer))
+             (pamparam-save-buffer))
+           (pamparam-save-buffer))
           ((string= state "DONE")
            (if (y-or-n-p "Card already done today.  Re-rate? ")
-               (pam--card-score score t actual-answer)
+               (pamparam--card-score score t actual-answer)
              (user-error "This card is already done today")))
           ((string= state "TODO")
-           (pam--card-score score nil actual-answer))
+           (pamparam--card-score score nil actual-answer))
           (t
            (user-error "Unexpected state: %s" state)))
     (outline-show-all)))
 
-(defun pam--todo-from-file (card-file)
+(defun pamparam--todo-from-file (card-file)
   (if (string-match "\\`\\([^-]+\\)-" card-file)
       (format
        "* TODO [[file:cards/%s/%s][%s]]\n"
@@ -173,20 +173,20 @@ Q - the quality of the answer:
        (match-string 1 card-file))
     (error "Unexpected file name")))
 
-(defun pam--card-score (score &optional already-done actual-answer)
+(defun pamparam--card-score (score &optional already-done actual-answer)
   (let ((card-file (file-name-nondirectory (buffer-file-name)))
         stats
         new-interval)
     (save-excursion
-      (pam-card-insert-score score actual-answer)
-      (setq stats (pam-card-read-stats))
-      (setq stats (pam-sm2 stats score))
-      (pam-card-insert-stats stats)
+      (pamparam-card-insert-score score actual-answer)
+      (setq stats (pamparam-card-read-stats))
+      (setq stats (pamparam-sm2 stats score))
+      (pamparam-card-insert-stats stats)
       (setq new-interval (nth 1 stats))
       (unless already-done
-        (let* ((todo-entry (pam--todo-from-file card-file))
+        (let* ((todo-entry (pamparam--todo-from-file card-file))
                str)
-          (with-current-buffer (pam-todo-file)
+          (with-current-buffer (pamparam-todo-file)
             (goto-char (point-min))
             (when (search-forward card-file)
               (if (memq score '(4 5))
@@ -203,19 +203,19 @@ Q - the quality of the answer:
                  (1+ (line-end-position)))
                 (goto-char (point-max))
                 (insert "* REVIEW " str))
-              (pam-save-buffer)))
-          (with-current-buffer (pam-todo-file new-interval)
+              (pamparam-save-buffer)))
+          (with-current-buffer (pamparam-todo-file new-interval)
             (goto-char (point-min))
             (unless (search-forward todo-entry nil t)
               (goto-char (point-max))
               (insert todo-entry)
-              (pam-save-buffer))
+              (pamparam-save-buffer))
             (kill-buffer))))
-      (pam-save-buffer))))
+      (pamparam-save-buffer))))
 
-(defvar-local pam-card-answer-validate-p nil)
+(defvar-local pamparam-card-answer-validate-p nil)
 
-(defun pam-card-answer ()
+(defun pamparam-card-answer ()
   "Answer the current card.
 Enter the answer at point, then press \".\" to validate."
   (goto-char (point-min))
@@ -224,17 +224,17 @@ Enter the answer at point, then press \".\" to validate."
   (goto-char (point-min))
   (insert "* \n")
   (goto-char 3)
-  (setq pam-card-answer-validate-p t))
+  (setq pamparam-card-answer-validate-p t))
 
-(defvar pam-is-redo nil)
+(defvar pamparam-is-redo nil)
 
-(defun pam-card-validate-maybe (&optional arg)
+(defun pamparam-card-validate-maybe (&optional arg)
   "Validate the given answer and score the current card.
 
 The given answer is the text between the card's first heading and
 point."
   (interactive "p")
-  (if pam-card-answer-validate-p
+  (if pamparam-card-answer-validate-p
       (let ((tans (save-excursion
                     (goto-char (point-max))
                     (re-search-backward "^\\*")
@@ -247,51 +247,51 @@ point."
                             (line-end-position))))
         (delete-region (point-min)
                        (1+ (line-end-position)))
-        (setq pam-card-answer-validate-p nil)
-        (if (pam-equal actual-answer tans)
+        (setq pamparam-card-answer-validate-p nil)
+        (if (pamparam-equal actual-answer tans)
             (if (save-excursion
                   (goto-char (point-max))
                   (re-search-backward "^\\* ")
                   (overlays-in (point) (point-max)))
-                (if pam-is-redo
-                    (pam-card-score 4)
-                  (pam-card-score 5))
-              (pam-card-score 3))
-          (pam-card-score 0 actual-answer)))
+                (if pamparam-is-redo
+                    (pamparam-card-score 4)
+                  (pamparam-card-score 5))
+              (pamparam-card-score 3))
+          (pamparam-card-score 0 actual-answer)))
     (self-insert-command arg)))
 
 ;;* Equivalence testing
-(defvar pam-equiv-hash (make-hash-table :test 'equal))
+(defvar pamparam-equiv-hash (make-hash-table :test 'equal))
 
-(defvar pam-equiv-classes '(("we" "wij")
+(defvar pamparam-equiv-classes '(("we" "wij")
                             ("je" "jij")
                             ("ze" "zij")
                             ("u" "jij")
                             ("dichtbij" "vlakbij")
                             ("test" "toets")))
 
-(defun pam-make-equivalent (a b)
-  (puthash a b pam-equiv-hash)
-  (puthash b b pam-equiv-hash))
+(defun pamparam-make-equivalent (a b)
+  (puthash a b pamparam-equiv-hash)
+  (puthash b b pamparam-equiv-hash))
 
-(dolist (c pam-equiv-classes)
-  (pam-make-equivalent (car c) (cadr c)))
+(dolist (c pamparam-equiv-classes)
+  (pamparam-make-equivalent (car c) (cadr c)))
 
-(defun pam-equal (sa sb)
+(defun pamparam-equal (sa sb)
   "Check if the answer SA matches the question SB.
 When SB has multiple lines, SA may match one of them."
   (if (string-match-p "\n" sb)
       (let ((sbl (split-string sb "\n" t))
             res)
         (while (and (null res) (setq sb (pop sbl)))
-          (setq res (pam-equal-single sa sb)))
+          (setq res (pamparam-equal-single sa sb)))
         res)
-    (pam-equal-single sa sb)))
+    (pamparam-equal-single sa sb)))
 
-(defun pam-equal-single (sa sb)
+(defun pamparam-equal-single (sa sb)
   "Check if SA matches SB."
-  (let ((lista (pam-sloppy sa))
-        (listb (pam-sloppy sb))
+  (let ((lista (pamparam-sloppy sa))
+        (listb (pamparam-sloppy sb))
         (res t)
         a b
         ah)
@@ -299,34 +299,34 @@ When SB has multiple lines, SA may match one of them."
       (setq a (pop lista))
       (setq b (pop listb))
       (unless (or (string= a b)
-                  (and (setq ah (gethash a pam-equiv-hash))
+                  (and (setq ah (gethash a pamparam-equiv-hash))
                        (equal ah
-                              (gethash b pam-equiv-hash))))
+                              (gethash b pamparam-equiv-hash))))
         (setq res nil)))
     (and res (null listb))))
 
-(defun pam-sloppy (str)
+(defun pamparam-sloppy (str)
   (mapcar #'downcase
           (split-string str "[.,?! ]" t)))
 
-(defvar pam-alist
+(defvar pamparam-alist
   '(("/home/oleh/Dropbox/org/wiki/dutch.org" . "/home/oleh/Dropbox/source/site-lisp/git/dutch.pam"))
   "Map a master file to the corresponding repository.
 Otherwise, the repository will be in the same directory as the master file.")
 
-(defvar pam-load-file-name (or load-file-name
+(defvar pamparam-load-file-name (or load-file-name
                                (buffer-file-name)))
 
-(defvar pam-path (expand-file-name
+(defvar pamparam-path (expand-file-name
                   "doc/sets/capitals/capitals.pam"
-                  (file-name-directory pam-load-file-name))
-  "Point to a default repository. In case you call `pam-drill'
+                  (file-name-directory pamparam-load-file-name))
+  "Point to a default repository. In case you call `pamparam-drill'
 while not in any repo, this repo will be selected.")
 
 ;;* Schedule files
-(defun pam-repo-directory (file)
+(defun pamparam-repo-directory (file)
   "Return the Git repository that corresponds to FILE."
-  (or (cdr (assoc file pam-alist))
+  (or (cdr (assoc file pamparam-alist))
       (expand-file-name
        (concat
         (file-name-sans-extension
@@ -334,9 +334,9 @@ while not in any repo, this repo will be selected.")
           file))
         ".pam/"))))
 
-(defvar pam-new-cards-per-day 75)
+(defvar pamparam-new-cards-per-day 75)
 
-(defun pam-card-delete (file)
+(defun pamparam-card-delete (file)
   "Delete the card in FILE.
 When called interactively, delete the card in the current buffer."
   (interactive (list (buffer-file-name)))
@@ -347,12 +347,12 @@ When called interactively, delete the card in the current buffer."
     (delete-file file)
     (when (string= (buffer-file-name) file)
       (kill-buffer))
-    (pam--update-card
+    (pamparam--update-card
      (file-name-nondirectory file)
      nil)))
 
-(defun pam--update-card (prev-file new-entry)
-  (let ((prev-scheduled (pam-cmd-to-list (format "git grep %s" prev-file)))
+(defun pamparam--update-card (prev-file new-entry)
+  (let ((prev-scheduled (pamparam-cmd-to-list (format "git grep %s" prev-file)))
         (save-silently t))
     (dolist (prev prev-scheduled)
       (unless (string-match "\\`\\([^:]+\\):.*\\[\\[file:cards/\\(.*\\)\\]\\[.*\\]\\'" prev)
@@ -371,34 +371,34 @@ When called interactively, delete the card in the current buffer."
                (1+ (line-end-position)))))
           (write-file schedule-file))))))
 
-(defvar pam-hash-card-name->file nil)
-(defvar pam-hash-card-body->file nil)
+(defvar pamparam-hash-card-name->file nil)
+(defvar pamparam-hash-card-body->file nil)
 
-(defun pam-cmd-to-list (cmd &optional directory)
+(defun pamparam-cmd-to-list (cmd &optional directory)
   (let ((default-directory (or directory default-directory)))
     (split-string
      (shell-command-to-string cmd)
      "\n" t)))
 
-(defun pam-cards (repo-dir)
-  (pam-cmd-to-list
+(defun pamparam-cards (repo-dir)
+  (pamparam-cmd-to-list
    "git ls-files cards/"
    repo-dir))
 
-(defun pam-visited-cards (repo-dir)
-  (pam-cmd-to-list
+(defun pamparam-visited-cards (repo-dir)
+  (pamparam-cmd-to-list
    "git grep --files-with-matches '^\\*\\* scores'"
    repo-dir))
 
-(defun pam-unvisited-cards (repo-dir)
-  (pam-cmd-to-list
+(defun pamparam-unvisited-cards (repo-dir)
+  (pamparam-cmd-to-list
    "git grep --files-without-match '^\\*\\* scores' | grep cards/"
    repo-dir))
 
-(defun pam-pile (repo-dir)
+(defun pamparam-pile (repo-dir)
   "Pile up all unvisited cards into a single file."
-  (let ((unvisited-cards (pam-unvisited-cards repo-dir))
-        (schedule-files (pam-cmd-to-list "git ls-files --full-name pam-*-[0-9][0-9].org"))
+  (let ((unvisited-cards (pamparam-unvisited-cards repo-dir))
+        (schedule-files (pamparam-cmd-to-list "git ls-files --full-name pamparam-*-[0-9][0-9].org"))
         (save-silently t))
     (dolist (sf schedule-files)
       (with-current-buffer (find-file (expand-file-name sf repo-dir))
@@ -406,21 +406,21 @@ When called interactively, delete the card in the current buffer."
           (goto-char (point-min))
           (while (search-forward card nil t)
             (delete-region (line-beginning-position) (1+ (line-end-position)))))
-        (pam-save-buffer)
+        (pamparam-save-buffer)
         (kill-buffer)))
     (with-current-buffer (find-file (expand-file-name "pampile.org" repo-dir))
       (delete-region (point-min) (point-max))
       (dolist (card unvisited-cards)
-        (insert (pam--todo-from-file (file-name-nondirectory card))))
-      (pam-save-buffer)
+        (insert (pamparam--todo-from-file (file-name-nondirectory card))))
+      (pamparam-save-buffer)
       (kill-buffer))))
 
-(defun pam-pull (arg &optional buffer)
+(defun pamparam-pull (arg &optional buffer)
   "Pull ARG cards into BUFFER.
 When called interactively, use today's schedule file."
   (interactive
    (list (read-number "how many cards: ")
-         (pam-todo-file)))
+         (pamparam-todo-file)))
   (let ((save-silently t)
         cards)
     (setq arg (min 100 arg))
@@ -429,33 +429,33 @@ When called interactively, use today's schedule file."
                           (expand-file-name "pampile.org"))
       (goto-char (point-min))
       (end-of-line arg)
-      (setq cards (pam-delete-region (point-min)
+      (setq cards (pamparam-delete-region (point-min)
                                      (min (1+ (point))
                                           (point-max))))
-      (pam-save-buffer)
+      (pamparam-save-buffer)
       (kill-buffer))
-    (pam-goto-schedule-part)
+    (pamparam-goto-schedule-part)
     (insert cards)
-    (pam-save-buffer)))
+    (pamparam-save-buffer)))
 
-(defun pam-goto-schedule-part ()
+(defun pamparam-goto-schedule-part ()
   (goto-char (point-min))
   (if (re-search-forward "^\\*" nil t)
       (goto-char (match-beginning 0))
     (goto-char (point-max))))
 
-(defun pam--recompute-git-cards (repo-dir)
-  (setq pam-hash-card-name->file (make-hash-table :test 'equal))
-  (setq pam-hash-card-body->file (make-hash-table :test 'equal))
-  (let ((git-files (pam-cards repo-dir)))
+(defun pamparam--recompute-git-cards (repo-dir)
+  (setq pamparam-hash-card-name->file (make-hash-table :test 'equal))
+  (setq pamparam-hash-card-body->file (make-hash-table :test 'equal))
+  (let ((git-files (pamparam-cards repo-dir)))
     (dolist (gf git-files)
       (if (string-match "\\`cards/[0-9a-f]\\{2\\}/\\([^-]+\\)-\\([^.]+\\)\\.org\\'" gf)
           (progn
-            (puthash (match-string 1 gf) gf pam-hash-card-name->file)
-            (puthash (match-string 2 gf) gf pam-hash-card-body->file))
+            (puthash (match-string 1 gf) gf pamparam-hash-card-name->file)
+            (puthash (match-string 2 gf) gf pamparam-hash-card-body->file))
         (error "Unexpected file name %s" gf)))))
 
-(defun pam--replace-card (_card-front _card-body repo-dir card-file prev-file)
+(defun pamparam--replace-card (_card-front _card-body repo-dir card-file prev-file)
   (let ((old-metadata
          (with-temp-buffer
            (insert-file-contents (expand-file-name prev-file repo-dir))
@@ -468,16 +468,16 @@ When called interactively, use today's schedule file."
     (delete-file (expand-file-name prev-file repo-dir))
     (let ((default-directory repo-dir)
           (fnn (file-name-nondirectory card-file)))
-      (pam--update-card prev-file (concat (substring fnn 0 2) "/" fnn)))
+      (pamparam--update-card prev-file (concat (substring fnn 0 2) "/" fnn)))
     old-metadata))
 
-(defun pam-update-card (card-front card-body repo-dir)
+(defun pamparam-update-card (card-front card-body repo-dir)
   (let* ((card-front-id (md5 card-front))
          (card-body-id (md5 card-body))
          (prev-file
           (or
-           (gethash card-front-id pam-hash-card-name->file)
-           (gethash card-body-id pam-hash-card-body->file)))
+           (gethash card-front-id pamparam-hash-card-name->file)
+           (gethash card-body-id pamparam-hash-card-body->file)))
          (subdir (substring card-front-id 0 2))
          (card-file
           (concat
@@ -488,7 +488,7 @@ When called interactively, use today's schedule file."
           ((string= card-file prev-file))
           (t
            (when (file-exists-p (expand-file-name prev-file repo-dir))
-             (setq metadata (pam--replace-card
+             (setq metadata (pamparam--replace-card
                              card-front card-body repo-dir card-file prev-file)))))
     (unless (file-exists-p (expand-file-name card-file repo-dir))
       (let* ((txt
@@ -509,24 +509,24 @@ When called interactively, use today's schedule file."
                   card-file)
           (error "Command failed: %s" cmd))))))
 
-(defconst pam-card-source-regexp "^\\* .*:cards:")
+(defconst pamparam-card-source-regexp "^\\* .*:cards:")
 
-(defun pam-sync ()
+(defun pamparam-sync ()
   "Synchronize the current `org-mode' master file to the cards repository.
 
 Create the cards repository if it doesn't exist.
 
 Each card is uniquely identifiable by either its front or its
 back.  So if you want to modify both the front and the back, first
-modify the front, call `pam-sync', then modify the back and call
-`pam-sync' again.  Otherwise, there's no way to \"connect\" the
+modify the front, call `pamparam-sync', then modify the back and call
+`pamparam-sync' again.  Otherwise, there's no way to \"connect\" the
 new card to the old one, and the old card will remain in the
 repository, while the new card will start with empty metadata."
   (interactive)
   (unless (eq major-mode 'org-mode)
     (error "Must be in `org-mode' file"))
   (let ((repo-dir
-         (pam-repo-directory (buffer-file-name)))
+         (pamparam-repo-directory (buffer-file-name)))
         (repo-is-new nil)
         (make-backup-files nil))
     (if (file-exists-p repo-dir)
@@ -537,23 +537,23 @@ repository, while the new card will start with empty metadata."
         (shell-command "git init")
         (make-directory "cards/"))
       (setq repo-is-new t))
-    (pam--recompute-git-cards repo-dir)
+    (pamparam--recompute-git-cards repo-dir)
     (let ((old-point (point))
           (processed-headings nil)
           (new-cards nil)
           (updated-cards nil))
       (goto-char (point-min))
-      (unless (re-search-forward pam-card-source-regexp nil t)
+      (unless (re-search-forward pamparam-card-source-regexp nil t)
         (error "No outlines with the :cards: tag found"))
       (beginning-of-line)
-      (while (re-search-forward pam-card-source-regexp nil t)
+      (while (re-search-forward pamparam-card-source-regexp nil t)
         (lispy-destructuring-setq (processed-headings new-cards updated-cards)
-            (pam-sync-current-outline
+            (pamparam-sync-current-outline
              processed-headings new-cards updated-cards repo-dir)))
       (goto-char old-point)
       (when (or new-cards updated-cards)
-        (pam-schedule-today
-         (mapcar #'pam--todo-from-file new-cards)
+        (pamparam-schedule-today
+         (mapcar #'pamparam--todo-from-file new-cards)
          (find-file (expand-file-name "pampile.org" repo-dir)))
         (when repo-is-new
           nil)
@@ -574,7 +574,7 @@ repository, while the new card will start with empty metadata."
                (length updated-cards)
                (length processed-headings)))))
 
-(defun pam-sync-current-outline (processed-headings new-cards updated-cards repo-dir)
+(defun pamparam-sync-current-outline (processed-headings new-cards updated-cards repo-dir)
   (let ((end (save-excursion
                (outline-end-of-subtree)
                (skip-chars-backward "\n ")
@@ -593,7 +593,7 @@ repository, while the new card will start with empty metadata."
         (if (member card-front processed-headings)
             (error "Duplicate heading encountered: %s" card-front)
           (push card-front processed-headings))
-        (when (setq card-info (pam-update-card card-front card-body repo-dir))
+        (when (setq card-info (pamparam-update-card card-front card-body repo-dir))
           (setq card-file (file-name-nondirectory (cdr card-info)))
           (cond ((eq (car card-info) 'new)
                  (push card-file new-cards))
@@ -601,13 +601,13 @@ repository, while the new card will start with empty metadata."
                  (push card-file updated-cards))))))
     (list processed-headings new-cards updated-cards)))
 
-(defun pam-default-directory ()
+(defun pamparam-default-directory ()
   (if (string-match "^\\(.*\\.pam/\\)" default-directory)
       (expand-file-name (match-string 1 default-directory))
-    pam-path))
+    pamparam-path))
 
-(defun pam-kill-buffers ()
-  (let* ((pdir (pam-default-directory))
+(defun pamparam-kill-buffers ()
+  (let* ((pdir (pamparam-default-directory))
          (cards-dir (expand-file-name "cards/" pdir)))
     (dolist (b (buffer-list))
       (when (buffer-file-name b)
@@ -616,26 +616,26 @@ repository, while the new card will start with empty metadata."
                     (and (equal dir pdir)
                          (not (equal (file-name-nondirectory
                                       (buffer-file-name b))
-                                     (pam-schedule-file (current-time))))))
+                                     (pamparam-schedule-file (current-time))))))
             (kill-buffer b)))))))
 
-(defun pam-schedule-file (time)
+(defun pamparam-schedule-file (time)
   (let ((year (format-time-string "%Y" time))
         (current-year (format-time-string "%Y" (current-time)))
-        (base (format-time-string "pam-%Y-%m-%d.org" time)))
+        (base (format-time-string "pamparam-%Y-%m-%d.org" time)))
     (if (string= year current-year)
         base
       (let ((dir (expand-file-name
-                  year (expand-file-name "years" (pam-default-directory)))))
+                  year (expand-file-name "years" (pamparam-default-directory)))))
         (unless (file-exists-p dir)
           (make-directory dir t))
         (expand-file-name base dir)))))
 
-(defun pam-todo-file (&optional offset)
+(defun pamparam-todo-file (&optional offset)
   (setq offset (or offset 0))
-  (let* ((default-directory (pam-default-directory))
+  (let* ((default-directory (pamparam-default-directory))
          (todo-file (expand-file-name
-                     (pam-schedule-file
+                     (pamparam-schedule-file
                       (time-add
                        (current-time)
                        (days-to-time offset)))))
@@ -645,29 +645,29 @@ repository, while the new card will start with empty metadata."
         (find-file todo-file)
         (insert "#+SEQ_TODO: TODO REVIEW | DONE\n")
         (when (eq offset 0)
-          (pam-pull 10 (current-buffer))
-          (message "Schedule was empty, used `pam-pull' for 10 cards"))
-        (pam-save-buffer)))
+          (pamparam-pull 10 (current-buffer))
+          (message "Schedule was empty, used `pamparam-pull' for 10 cards"))
+        (pamparam-save-buffer)))
     (find-file-noselect todo-file)))
 
-(defvar pam-last-rechedule nil)
+(defvar pamparam-last-rechedule nil)
 
-(defun pam-schedule-today (cards &optional buffer)
-  (with-current-buffer (or buffer (pam-todo-file))
-    (pam-goto-schedule-part)
+(defun pamparam-schedule-today (cards &optional buffer)
+  (with-current-buffer (or buffer (pamparam-todo-file))
+    (pamparam-goto-schedule-part)
     (dolist (card cards)
       (insert card))
     (let ((save-silently t))
-      (pam-save-buffer))))
+      (pamparam-save-buffer))))
 
-(defun pam-reschedule-maybe ()
+(defun pamparam-reschedule-maybe ()
   (let ((today (calendar-current-date)))
-    (unless (and pam-last-rechedule
+    (unless (and pamparam-last-rechedule
                  (<
                   (calendar-absolute-from-gregorian today)
-                  (calendar-absolute-from-gregorian pam-last-rechedule)))
-      (setq pam-last-rechedule today)
-      (let* ((today-file (pam-todo-file))
+                  (calendar-absolute-from-gregorian pamparam-last-rechedule)))
+      (setq pamparam-last-rechedule today)
+      (let* ((today-file (pamparam-todo-file))
              (today-file-name (file-name-nondirectory
                                (buffer-file-name today-file)))
              (pdir (file-name-directory
@@ -685,31 +685,31 @@ repository, while the new card will start with empty metadata."
                 (push (buffer-substring-no-properties
                        (point) (1+ (line-end-position)))
                       cards)))
-            (pam-schedule-today (mapcar (lambda (s) (concat "* TODO " s))
+            (pamparam-schedule-today (mapcar (lambda (s) (concat "* TODO " s))
                                         (nreverse cards)))
             (delete-file old-file)))))))
 
 ;;;###autoload
-(defun pam-drill ()
+(defun pamparam-drill ()
   "Start a learning session.
 
 When `default-directory' is in a *.pam repository, use that repository.
-Otherwise, use the repository that `pam-path' points to.
+Otherwise, use the repository that `pamparam-path' points to.
 
-See `pam-sync' for creating and updating a *.pam repository.
+See `pamparam-sync' for creating and updating a *.pam repository.
 
-If you have no more cards scheduled for today, use `pam-pull'."
+If you have no more cards scheduled for today, use `pamparam-pull'."
   (interactive)
-  (pam-reschedule-maybe)
+  (pamparam-reschedule-maybe)
   (let (card-link card-file)
-    (when (bound-and-true-p pam-card-mode)
+    (when (bound-and-true-p pamparam-card-mode)
       (when (buffer-modified-p)
-        (pam-save-buffer))
+        (pamparam-save-buffer))
       (kill-buffer))
     (delete-other-windows)
     (split-window-vertically)
-    (pam-kill-buffers)
-    (switch-to-buffer (pam-todo-file))
+    (pamparam-kill-buffers)
+    (switch-to-buffer (pamparam-todo-file))
     (goto-char (point-min))
     (when (re-search-forward "^* \\(TODO\\|REVIEW\\) " nil t)
       (recenter 5)
@@ -722,21 +722,21 @@ If you have no more cards scheduled for today, use `pam-pull'."
         (message "%d cards learned/reviewed today. Well done!"
                  (cl-count-if
                   (lambda (x) (string-match "^\\* DONE" x))
-                  (split-string (with-current-buffer (pam-todo-file)
+                  (split-string (with-current-buffer (pamparam-todo-file)
                                   (buffer-string)) "\n")))
       (unless (string-match "\\`\\[\\[file:\\([^]]+\\)\\]\\[.*\\]\\]\\'" card-link)
-        (error "Bad entry in %s: %s" (pam-todo-file) card-link))
+        (error "Bad entry in %s: %s" (pamparam-todo-file) card-link))
       (setq card-file (match-string 1 card-link))
       (switch-to-buffer
        (find-file-noselect
-        (expand-file-name card-file (pam-default-directory))))
-      (pam-card-mode))))
+        (expand-file-name card-file (pamparam-default-directory))))
+      (pamparam-card-mode))))
 
-(defun pam-commit ()
+(defun pamparam-commit ()
   "Commit the current progress using Git."
   (interactive)
-  (let* ((default-directory (pam-default-directory))
-         (status (pam-cmd-to-list "git status"))
+  (let* ((default-directory (pamparam-default-directory))
+         (status (pamparam-cmd-to-list "git status"))
          (card-count
           (cl-count-if
            (lambda (s)
@@ -754,10 +754,10 @@ If you have no more cards scheduled for today, use `pam-pull'."
         "git add . && git commit -m 'Do %s %s'"
         card-count card-str))))))
 
-(defun pam-unschedule-card (card-file)
+(defun pamparam-unschedule-card (card-file)
   "Unschedule CARD-FILE everywhere and schedule it for today."
   (let* ((repo-dir (locate-dominating-file card-file ".git"))
-         (s-files (pam-cmd-to-list (format "git add . && git grep --files-with-matches %s" card-file)
+         (s-files (pamparam-cmd-to-list (format "git add . && git grep --files-with-matches %s" card-file)
                                    repo-dir)))
     (dolist (file s-files)
       (with-current-buffer (find-file-noselect (expand-file-name file repo-dir))
@@ -767,65 +767,65 @@ If you have no more cards scheduled for today, use `pam-pull'."
             (delete-region (line-beginning-position)
                            (1+ (line-end-position))))
           (let ((save-silently t))
-            (pam-save-buffer)))
-        (unless (equal (current-buffer) (pam-todo-file))
+            (pamparam-save-buffer)))
+        (unless (equal (current-buffer) (pamparam-todo-file))
           (kill-buffer))))
-    (with-current-buffer (pam-todo-file)
-      (pam-goto-schedule-part)
+    (with-current-buffer (pamparam-todo-file)
+      (pamparam-goto-schedule-part)
       (if (re-search-forward "^\\* \\(TODO\\|REVIEW\\)" nil t)
           (goto-char (match-beginning 0))
         (goto-char (point-max)))
-      (insert (pam--todo-from-file card-file)))))
+      (insert (pamparam--todo-from-file card-file)))))
 
-(defun pam-card-redo ()
+(defun pamparam-card-redo ()
   "Redo the current card without penalty."
   (interactive)
   (if (string-match-p "cards/.*org\\'" (buffer-file-name))
       (let ((fname (buffer-file-name)))
-        (pam-save-buffer)
-        (pam-cmd-to-list (format "git checkout -- %s" fname))
+        (pamparam-save-buffer)
+        (pamparam-cmd-to-list (format "git checkout -- %s" fname))
         (revert-buffer nil t nil)
-        (pam-unschedule-card (file-name-nondirectory fname))
-        (setq-local pam-is-redo t)
-        (pam-card-mode))
+        (pamparam-unschedule-card (file-name-nondirectory fname))
+        (setq-local pamparam-is-redo t)
+        (pamparam-card-mode))
     (user-error "Applies only to card files")))
 
-;;* `pam-card-mode'
-(defvar pam-card-mode-map
+;;* `pamparam-card-mode'
+(defvar pamparam-card-mode-map
   (let ((map (make-sparse-keymap)))
     (worf-define-key map (kbd "q") 'bury-buffer)
-    (worf-define-key map (kbd "R") 'pam-card-redo
+    (worf-define-key map (kbd "R") 'pamparam-card-redo
                      :break t)
-    (worf-define-key map (kbd "n") 'pam-drill
+    (worf-define-key map (kbd "n") 'pamparam-drill
                      :break t)
-    (worf-define-key map (kbd "D") 'pam-card-delete)
-    (define-key map (kbd ".") 'pam-card-validate-maybe)
+    (worf-define-key map (kbd "D") 'pamparam-card-delete)
+    (define-key map (kbd ".") 'pamparam-card-validate-maybe)
     map))
 
-(define-minor-mode pam-card-mode
+(define-minor-mode pamparam-card-mode
   "Minor mode for Pam cards.
 
-\\{pam-card-mode-map}"
+\\{pamparam-card-mode-map}"
   :lighter " p"
-  (when pam-card-mode
+  (when pamparam-card-mode
     (if (eq major-mode 'org-mode)
         (progn
           (setq org-cycle-global-status 'contents)
           (goto-char (point-min))
-          (pam-card-answer))
-      (pam-card-mode -1))))
+          (pamparam-card-answer))
+      (pamparam-card-mode -1))))
 
-(lispy-raise-minor-mode 'pam-card-mode)
+(lispy-raise-minor-mode 'pamparam-card-mode)
 
-;;* `hydra-pam'
-(defhydra hydra-pam (:exit t)
+;;* `hydra-pamparam'
+(defhydra hydra-pamparam (:exit t)
   "pam"
-  ("d" pam-drill "drill")
-  ("s" pam-sync "sync")
-  ("p" pam-pull "pull")
-  ("c" pam-commit "commit")
+  ("d" pamparam-drill "drill")
+  ("s" pamparam-sync "sync")
+  ("p" pamparam-pull "pull")
+  ("c" pamparam-commit "commit")
   ("q" nil "quit"))
-(hydra-set-property 'hydra-pam :verbosity 1)
+(hydra-set-property 'hydra-pamparam :verbosity 1)
 
 (provide 'pamparam)
 
