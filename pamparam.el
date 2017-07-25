@@ -624,7 +624,7 @@ repository, while the new card will start with empty metadata."
 (defun pamparam-schedule-file (time)
   (let ((year (format-time-string "%Y" time))
         (current-year (format-time-string "%Y" (current-time)))
-        (base (format-time-string "pamparam-%Y-%m-%d.org" time)))
+        (base (format-time-string "pam-%Y-%m-%d.org" time)))
     (if (string= year current-year)
         base
       (let ((dir (expand-file-name
