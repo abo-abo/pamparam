@@ -492,13 +492,12 @@ When called interactively, use today's schedule file."
                              card-front card-body repo-dir card-file prev-file)))))
     (unless (file-exists-p (expand-file-name card-file repo-dir))
       (let* ((txt
-              (replace-regexp-in-string
-               "'" "'\\''"
-               (format "%s* %s\\n%s"
-                       (or metadata "* m\\n#+STARTUP: content\\n")
-                       card-front
-                       card-body)
-               t t))
+              (concat
+               (or metadata "* m\\n#+STARTUP: content\\n")
+               (replace-regexp-in-string
+                "'" "'\\''"
+                (format "* %s\\n%s" card-front card-body)
+                t t)))
              (cmd (format "mkdir -p %s && echo -e %s > %s"
                           (shell-quote-argument (file-name-directory full-card-file))
                           (shell-quote-argument txt)
