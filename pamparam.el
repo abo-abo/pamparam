@@ -498,10 +498,10 @@ When called interactively, use today's schedule file."
                 "'" "'\\''"
                 (format "* %s\\n%s" card-front card-body)
                 t t)))
-             (cmd (format "mkdir -p %s && echo -e %s > %s"
-                          (shell-quote-argument (file-name-directory full-card-file))
+             (cmd (format "echo -e %s > %s"
                           (shell-quote-argument txt)
                           (shell-quote-argument full-card-file))))
+        (make-directory (file-name-directory full-card-file) t)
         (if (= 0 (call-process-shell-command cmd))
             (cons (if metadata
                       'update
