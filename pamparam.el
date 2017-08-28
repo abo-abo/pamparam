@@ -471,6 +471,25 @@ When called interactively, use today's schedule file."
       (pamparam--update-card prev-file (concat (substring fnn 0 2) "/" fnn)))
     old-metadata))
 
+(if (eq system-type 'windows-nt)
+    (defsubst pamparam-spit (str file)
+      (with-current-buffer (find-file-noselect file)
+        (erase-buffer)
+        (insert str)
+        (save-buffer)
+        (kill-buffer (current-buffer))))
+  (defsubst pamparam-spit (str file)
+    (let ((cmd (format "echo %s > %s"
+                       (shell-quote-argument
+                        (replace-regexp-in-string
+                         "'" "'\\''"
+                         (replace-regexp-in-string "\n" "\\\\n" str)
+                         t t))
+                       (shell-quote-argument file))))
+
+      (unless (= 0 (call-process-shell-command cmd))
+        (error "Command failed: %s" cmd)))))
+
 (defun pamparam-update-card (card-front card-body repo-dir)
   (let* ((card-front-id (md5 card-front))
          (card-body-id (md5 card-body))
@@ -493,21 +512,14 @@ When called interactively, use today's schedule file."
     (unless (file-exists-p (expand-file-name card-file repo-dir))
       (let* ((txt
               (concat
-               (or metadata "* m\\n#+STARTUP: content\\n")
-               (replace-regexp-in-string
-                "'" "'\\''"
-                (format "* %s\\n%s" card-front card-body)
-                t t)))
-             (cmd (format "echo -e %s > %s"
-                          (shell-quote-argument txt)
-                          (shell-quote-argument full-card-file))))
+               (or metadata "* m\n#+STARTUP: content\n")
+               (format "* %s\n%s" card-front card-body))))
         (make-directory (file-name-directory full-card-file) t)
-        (if (= 0 (call-process-shell-command cmd))
-            (cons (if metadata
-                      'update
-                    'new)
-                  card-file)
-          (error "Command failed: %s" cmd))))))
+        (pamparam-spit txt full-card-file)
+        (cons (if metadata
+                  'update
+                'new)
+              card-file)))))
 
 (defconst pamparam-card-source-regexp "^\\* .*:cards:")
 
