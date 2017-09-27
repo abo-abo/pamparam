@@ -671,6 +671,11 @@ repository, while the new card will start with empty metadata."
     (let ((save-silently t))
       (pamparam-save-buffer))))
 
+(defvar pamparam-day-limit 50
+  "Limit for today's repetitions.
+All cards above this number that would be scheduled for today
+will instead be moved to tomorrow.")
+
 (defun pamparam-reschedule-maybe ()
   (let ((today (calendar-current-date)))
     (unless (and pamparam-last-rechedule
@@ -697,8 +702,20 @@ repository, while the new card will start with empty metadata."
                        (point) (1+ (line-end-position)))
                       cards)))
             (pamparam-schedule-today (mapcar (lambda (s) (concat "* TODO " s))
-                                        (nreverse cards)))
-            (delete-file old-file)))))))
+                                             (nreverse cards)))
+            (delete-file old-file)))
+        (with-current-buffer today-file
+          (goto-char (point-min))
+          (when (re-search-forward "^\\* TODO" nil t pamparam-day-limit)
+            (beginning-of-line 2)
+            (let ((rescheduled (buffer-substring-no-properties
+                                (point) (point-max))))
+              (delete-region (point) (point-max))
+              (save-buffer)
+              (with-current-buffer (pamparam-todo-file 1)
+                (goto-char (point-max))
+                (insert rescheduled)
+                (save-buffer)))))))))
 
 ;;;###autoload
 (defun pamparam-drill ()
