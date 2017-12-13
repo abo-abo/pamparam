@@ -14,12 +14,12 @@ remember.
 git clone https://github.com/abo-abo/pamparam
 #+end_src
 
-1. Open =pamparam/doc/sets/capitals/capitals.org= and call =pam-sync=.
+1. Open =pamparam/doc/sets/capitals/capitals.org= and call =pamparam-sync=.
 
    You get a message like =35 new cards, 0 updated, 35 total= and the
    file =pampile.org= is opened.
 
-2. Call =pam-drill=.
+2. Call =pamparam-drill=.
 
    You get two buffers. One buffer, named e.g. =pam-2017-04-23.org= is
    your schedule file. It holds 10 cards that you should do today. The
@@ -33,18 +33,18 @@ git clone https://github.com/abo-abo/pamparam
    Finally, if you enter a wrong answer, you get a score of 0.
 
 4. Theoretically, you can stop here with 1/10 cards done. Resume at
-   any later stage with =pam-drill=. Or press ~n~ (calls =pam-drill=) to
+   any later stage with =pamparam-drill=. Or press ~n~ (calls =pamparam-drill=) to
    select the next card. Any cards scheduled today but not finished
    will carry over to tomorrow.
 
 Assuming you finished all 10 cards, what's next?
 
-- (optional) call =pam-commit= to commit your progress.
+- (optional) call =pamparam-commit= to commit your progress.
 
   It's not really required, but it's neat to track everything, and
   it's a nice restore point if you ever mess up your repo.
 
-- if you feel like doing more cards, call =pam-pull=.
+- if you feel like doing more cards, call =pamparam-pull=.
 
   I don't recommend doing more than 50 cards in a day, because you'll
   be spending a lot of time on repetition in the future.
@@ -53,7 +53,7 @@ Assuming you finished all 10 cards, what's next?
 
 * How this works
 ** Terminology
-After =pam-sync= and =pam-drill=, you get the following tree:
+After =pamparam-sync= and =pamparam-drill=, you get the following tree:
 #+BEGIN_EXAMPLE
 .
 ├── capitals.org
@@ -97,8 +97,8 @@ With this example, let's get the terminology out of the way:
 
      This is your cards pile. Very similar to a schedule file, it
      holds all cards that are not yet scheduled.  There are two ways
-     to interact with your pile: add to it by calling =pam-sync= from
-     the master file or remove from it by calling =pam-pull=.
+     to interact with your pile: add to it by calling =pamparam-sync= from
+     the master file or remove from it by calling =pamparam-pull=.
 
 - Repo :: =capitals.pam=
 
@@ -106,7 +106,7 @@ With this example, let's get the terminology out of the way:
      the pile.  Note that the master file isn't here.  This is
      intentional, since any of your existing Org can become a master
      file simply by adding a =:cards:= tag to one of the outlines.  See
-     =pam-alist= for a way to connect a master file to a repo that's not
+     =pamparam-alist= for a way to connect a master file to a repo that's not
      in the same directory.
 
 ** Master file example
@@ -177,17 +177,17 @@ The second heading's name is the card's front, the question. The
 second heading's body is the anwer, it starts out hidden.
 
 ** Card scoring
-| score | meaning                                                              |
-|-------+----------------------------------------------------------------------|
-|     5 | perfect answer, body hidden                                          |
-|     4 | wrong answer, pam-card-redo was called, followed by a perfect answer |
-|     3 | perfect answer, body revealed                                        |
-|     0 | wrong answer                                                         |
+| score | meaning                                                                   |
+|-------+---------------------------------------------------------------------------|
+|     5 | perfect answer, body hidden                                               |
+|     4 | wrong answer, pamparam-card-redo was called, followed by a perfect answer |
+|     3 | perfect answer, body revealed                                             |
+|     0 | wrong answer                                                              |
 
 On the first try, you can get either a 5 or a 3 or a 0. Unless you get
 a 5, you have to =REVIEW= the card today.
 
-You can use =pam-card-redo= if you make a mechanical typo and get a 0,
+You can use =pamparam-card-redo= if you make a mechanical typo and get a 0,
 even though you knew the card. If you manage to correct the typo, you
 get a 4. You can make use of ~C-y~ to yank your previous answer.
 
@@ -202,22 +202,22 @@ schedule.
 
 *** Card file
 Global bindings:
-| . | pam-card-validate-maybe |
+| . | pamparam-card-validate-maybe |
 
 Local bindings (only active if your point is at a heading start), in
 order of importance:
-| n | pam-drill       |
-| q | bury-buffer     |
-| R | pam-card-redo   |
-| D | pam-card-delete |
+| n | pamparam-drill       |
+| q | bury-buffer          |
+| R | pamparam-card-redo   |
+| D | pamparam-card-delete |
 
 *** Master file
-| pam-sync |
+| pamparam-sync |
 
 *** Anywhere in the repo
-| pam-drill  |
-| pam-pull   |
-| pam-commit |
+| pamparam-drill  |
+| pamparam-pull   |
+| pamparam-commit |
 
 * Customization
 While it's possible to have multiple repos, currently I have only a
@@ -226,20 +226,20 @@ in the same directory as the master file =dutch.org=. So I use this
 setting:
 
 #+begin_src elisp
-(setq pam-alist
+(setq pamparam-alist
       '(("/home/oleh/Dropbox/org/wiki/dutch.org"
          . "/home/oleh/Dropbox/source/site-lisp/git/dutch.pam")))
 #+end_src
 
-=pam-drill= doesn't know where your repos are located. It can only
+=pamparam-drill= doesn't know where your repos are located. It can only
 determine if the current buffer's file belongs to a repo or not.  In
 case it does, the current repo is used. Otherwise, the default repo is
-used which is pointed to by =pam-path=.
+used which is pointed to by =pamparam-path=.
 
-By default, =pam-path= points to the repo of the provided example master
+By default, =pamparam-path= points to the repo of the provided example master
 file. Here's my custom setting:
 #+begin_src elisp
-(setq pam-path "/home/oleh/Dropbox/source/site-lisp/git/dutch.pam")
+(setq pamparam-path "/home/oleh/Dropbox/source/site-lisp/git/dutch.pam")
 #+end_src
 
 Finally, you can have all key bindings in one place with a hydra:
