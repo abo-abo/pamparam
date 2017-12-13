@@ -481,9 +481,8 @@ When called interactively, use today's schedule file."
         (save-buffer)
         (kill-buffer (current-buffer))))
   (defun pamparam-spit (str file)
-    (let ((cmd (format "echo %s > %s"
-                       (shell-quote-argument
-                        (replace-regexp-in-string "'" "'\\''" str t t))
+    (let ((cmd (format "echo '%s' > %s"
+                       (replace-regexp-in-string "'" "'\\''" str t t)
                        (shell-quote-argument file))))
       (unless (= 0 (call-process-shell-command cmd))
         (error "Command failed: %s" cmd)))))
