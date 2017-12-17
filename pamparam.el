@@ -586,20 +586,32 @@ repository, while the new card will start with empty metadata."
              (length updated-cards)
              (length processed-headings))))
 
+(defun pamparam--card-info ()
+  (let* ((bnd (worf--bounds-subtree))
+         (str (lispy--string-dwim bnd))
+         front back)
+    (cond ((string-match "^\\*+ a\n\\(.*\\)" str)
+           (setq front (substring str 0 (match-beginning 0)))
+           (setq back (concat "* a\n" (match-string 1 str)))
+           (setq front (string-trim-left front "[* ]*"))
+           (goto-char (cdr bnd)))
+          ((string-match "\\`\\*+ \\(.*\\)\n\\([^*]+\\)\\(?:\n\\*\\)?" str)
+           (setq front (match-string 1 str))
+           (setq back (match-string 2 str))
+           (goto-char (+ (car bnd) (match-end 2)))
+           (setq back (string-trim-right back "\n+")))
+          (t
+           (error "unexpected")))
+    (cons front back)))
+
 (defun pamparam-sync-current-outline (processed-headings new-cards updated-cards repo-dir)
   (let ((end (save-excursion
                (outline-end-of-subtree)
-               (skip-chars-backward "\n ")
                (point))))
     (while (re-search-forward "^\\*\\{2,3\\} \\(.*\\)$" end t)
-      (let* ((card-front (match-string-no-properties 1))
-             (card-body (buffer-substring-no-properties
-                         (1+ (point))
-                         (if (re-search-forward "^\\*" end t)
-                             (progn
-                               (backward-char 2)
-                               (point))
-                           end)))
+      (let* ((card-info (pamparam--card-info))
+             (card-front (car card-info))
+             (card-body (cdr card-info))
              card-info
              card-file)
         (if (member card-front processed-headings)
@@ -841,7 +853,8 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
         (progn
           (setq org-cycle-global-status 'contents)
           (goto-char (point-min))
-          (pamparam-card-answer))
+          (pamparam-card-answer)
+          (org-hide-block-all))
       (pamparam-card-mode -1))))
 
 (lispy-raise-minor-mode 'pamparam-card-mode)
