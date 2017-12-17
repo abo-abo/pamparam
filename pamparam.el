@@ -534,9 +534,7 @@ repository, while the new card will start with empty metadata."
   (interactive)
   (unless (eq major-mode 'org-mode)
     (error "Must be in `org-mode' file"))
-  (let ((repo-dir
-         (pamparam-repo-directory (buffer-file-name)))
-        (repo-is-new nil)
+  (let ((repo-dir (pamparam-repo-directory (buffer-file-name)))
         (make-backup-files nil))
     (if (file-exists-p repo-dir)
         (unless (file-directory-p repo-dir)
@@ -544,8 +542,7 @@ repository, while the new card will start with empty metadata."
       (make-directory repo-dir)
       (let ((default-directory repo-dir))
         (shell-command "git init")
-        (make-directory "cards/"))
-      (setq repo-is-new t))
+        (make-directory "cards/")))
     (pamparam--recompute-git-cards repo-dir)
     (let ((old-point (point))
           (processed-headings nil)
@@ -557,15 +554,13 @@ repository, while the new card will start with empty metadata."
       (beginning-of-line)
       (while (re-search-forward pamparam-card-source-regexp nil t)
         (lispy-destructuring-setq (processed-headings new-cards updated-cards)
-                                  (pamparam-sync-current-outline
-                                   processed-headings new-cards updated-cards repo-dir)))
+            (pamparam-sync-current-outline
+             processed-headings new-cards updated-cards repo-dir)))
       (goto-char old-point)
       (when (or new-cards updated-cards)
         (pamparam-schedule-today
          (mapcar #'pamparam--todo-from-file new-cards)
          (find-file (expand-file-name "pampile.org" repo-dir)))
-        (when repo-is-new
-          nil)
         (shell-command-to-string
          (format
           "cd %s && git add . && git commit -m %s"
