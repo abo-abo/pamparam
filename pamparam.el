@@ -548,40 +548,43 @@ repository, while the new card will start with empty metadata."
         (make-backup-files nil))
     (pamparam-repo-init repo-dir)
     (pamparam--recompute-git-cards repo-dir)
-    (let ((old-point (point))
-          (processed-headings nil)
-          (new-cards nil)
-          (updated-cards nil))
-      (goto-char (point-min))
-      (unless (re-search-forward pamparam-card-source-regexp nil t)
-        (error "No outlines with the :cards: tag found"))
-      (beginning-of-line)
-      (while (re-search-forward pamparam-card-source-regexp nil t)
-        (lispy-destructuring-setq (processed-headings new-cards updated-cards)
-            (pamparam-sync-current-outline
-             processed-headings new-cards updated-cards repo-dir)))
-      (goto-char old-point)
-      (when (or new-cards updated-cards)
-        (pamparam-schedule-today
-         (mapcar #'pamparam--todo-from-file new-cards)
-         (find-file (expand-file-name "pampile.org" repo-dir)))
-        (shell-command-to-string
-         (format
-          "cd %s && git add . && git commit -m %s"
-          (shell-quote-argument repo-dir)
-          (shell-quote-argument
-           (cond ((null updated-cards)
-                  (format "Add %d new card(s)" (length new-cards)))
-                 ((null new-cards)
-                  (format "Update %d card(s)" (length updated-cards)))
-                 (t
-                  (format "Add %d new card(s), update %d cards"
-                          (length new-cards)
-                          (length updated-cards))))))))
-      (message "%d new cards, %d updated, %d total"
-               (length new-cards)
-               (length updated-cards)
-               (length processed-headings)))))
+    (pamparam--sync repo-dir)))
+
+(defun pamparam--sync (repo-dir)
+  (let ((old-point (point))
+        (processed-headings nil)
+        (new-cards nil)
+        (updated-cards nil))
+    (goto-char (point-min))
+    (unless (re-search-forward pamparam-card-source-regexp nil t)
+      (error "No outlines with the :cards: tag found"))
+    (beginning-of-line)
+    (while (re-search-forward pamparam-card-source-regexp nil t)
+      (lispy-destructuring-setq (processed-headings new-cards updated-cards)
+          (pamparam-sync-current-outline
+           processed-headings new-cards updated-cards repo-dir)))
+    (goto-char old-point)
+    (when (or new-cards updated-cards)
+      (pamparam-schedule-today
+       (mapcar #'pamparam--todo-from-file new-cards)
+       (find-file (expand-file-name "pampile.org" repo-dir)))
+      (shell-command-to-string
+       (format
+        "cd %s && git add . && git commit -m %s"
+        (shell-quote-argument repo-dir)
+        (shell-quote-argument
+         (cond ((null updated-cards)
+                (format "Add %d new card(s)" (length new-cards)))
+               ((null new-cards)
+                (format "Update %d card(s)" (length updated-cards)))
+               (t
+                (format "Add %d new card(s), update %d cards"
+                        (length new-cards)
+                        (length updated-cards))))))))
+    (message "%d new cards, %d updated, %d total"
+             (length new-cards)
+             (length updated-cards)
+             (length processed-headings))))
 
 (defun pamparam-sync-current-outline (processed-headings new-cards updated-cards repo-dir)
   (let ((end (save-excursion
