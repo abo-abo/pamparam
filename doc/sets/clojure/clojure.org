@@ -105,3 +105,76 @@ disj
 #+end_src
 *** a
 get-in
+** String to symbol
+#+begin_src clojure
+(eval (list (symbol "+") 1 2))
+;; => 3
+#+end_src
+*** a
+symbol
+** Apply map then concat
+#+begin_src clojure
+;;* :
+(defn f1 [n]
+  [(- n 1) n (+ n 1)])
+(f1 1)
+;; =>
+;; [0 1 2]
+
+;;* :
+(apply concat (map f1 [1 4 8]))
+;; =>
+;; (0 1 2 3 4 5 7 8 9)
+
+;;* :
+(mapcat f1 [1 4 8])
+;; =>
+;; (0 1 2 3 4 5 7 8 9)
+#+end_src
+*** a
+mapcat
+** cddr
+#+begin_src clojure
+(nnext '(1 2 3))
+;; => (3)
+#+end_src
+*** a
+nnext
+** make a forward declaration
+*** a
+declare
+** avoid symbol resolution in a macro
+#+begin_src clojure
+;;* :
+(defmacro awhen1 [expr & body]
+  `(let [~'it ~expr]
+     (if ~'it
+       (do ~@body))))
+
+(macroexpand-1 '(awhen1 [1 2 3] (it 2)))
+;; => (clojure.core/let [it [1 2 3]] (if it (do (it 2))))
+
+;;* :
+(defmacro awhen2 [expr & body]
+  `(let [it ~expr]
+     (if it
+       (do ~@body))))
+
+(macroexpand-1 '(awhen2 [1 2 3] (it 2)))
+;; => (clojure.core/let [user/it [1 2 3]] (if user/it (do (it 2))))
+#+end_src
+*** a
+~'
+** Take fn1,...,fnN => #(vector (apply fn1 %&) ... (apply fnN %&))
+#+begin_src clojure
+;;* :
+(let [coll {:a 1 :b 2 :c 3}]
+  (= [(:a coll) (:b coll)]
+     ((juxt :a :b) coll)
+     (#(vector (apply :a %&) (apply :b %&)) coll)
+     [1 2]))
+;; => true
+#+end_src
+
+*** a
+juxt
