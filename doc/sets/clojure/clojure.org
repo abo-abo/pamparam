@@ -1,3 +1,4 @@
+* Tasks
 * Clojure functions                                                                      :cards:
 https://clojuredocs.org/clojure.core/
 ** Number of items in the collection
@@ -174,7 +175,223 @@ declare
      (#(vector (apply :a %&) (apply :b %&)) coll)
      [1 2]))
 ;; => true
+
+;;* :
+(= ((juxt take drop) 3 (range 9))
+   (->> [take drop]
+        (map #(% 3 (range 9)))))
+;; => true
 #+end_src
 
 *** a
 juxt
+** Return a lazy sequence of initial items matching a predicate in a collection
+#+begin_src clojure
+;;* :
+(take-while neg? [-1 -2 -3 4 5 6 -7 -8 9])
+;; => (-1 -2 -3)
+
+;;* :
+(filter neg? [-1 -2 -3 4 5 6 -7 -8 9])
+;; => (-1 -2 -3 -7 -8)
+#+end_src
+*** a
+take-while
+** Return a lazy sequence removing all initial items that don't match a predicate
+#+begin_src clojure
+;;* :
+(drop-while neg? [-1 -2 -3 4 5 6 -7 -8 9])
+;; => (4 5 6 -7 -8 9)
+
+;;* :
+(filter (comp not neg?)  [-1 -2 -3 4 5 6 -7 -8 9])
+;; => (4 5 6 9)
+#+end_src
+*** a
+drop-while
+** Set =*ns*= to the namespace named by the symbol, creating it if needed
+#+begin_src clojure
+;;* Examples
+;;** create and switch to a namespace:
+(in-ns 'first-namespace)
+;; => first-namespace
+
+;;** create a var in the current namespace:
+(def my-var "value")
+;; => #'first-namespace/my-var
+
+;;** :
+(in-ns 'second-namespace)
+;; => second-namespace
+
+;;** refer to a symbol in another namespace:
+first-namespace/my-var
+;; => "value"
+
+;;** clojure.core is not imported:
+(lispy-clojure/ok
+ (list))
+;; => "java.lang.RuntimeException: Unable to resolve symbol: list in this context, compiling:(/tmp/form-init3619942662088095204.clj:2:2)"
+
+;;** back to default ns:
+(in-ns 'user)
+;; => user
+#+end_src
+*** a
+in-ns
+** Import all public vars from a namespace into the current namespace, subject to filters
+#+begin_src clojure
+;;* Example 1: import everything (lame)
+;;** :
+(ns one)
+;; => one
+
+;;** :
+(def t1 "t1")
+;; => #'one/t1
+
+;;** :
+(ns two (:refer one))
+;; => two
+
+;;** :
+t1
+;; => "t1"
+
+;;* Example 2: import specific functions
+;;** :
+(in-ns 'temp)
+;; => temp
+
+;;** :
+(clojure.core/refer 'clojure.string :only '[capitalize trim])
+;; => nil
+
+;;** :
+(capitalize (trim " hOnduRAS "))
+;; => "Honduras"
+
+;;* Example 3: import specific functions via aliases
+
+;;** :
+(clojure.core/refer 'clojure.string :rename '{capitalize cap, trim trm})
+;; => nil
+
+;;** :
+(cap (trm " hOnduRAS "))
+;; => "Honduras"
+
+;;** :
+(ns user)
+;; => user
+#+end_src
+*** a
+refer
+** Same as (refer 'clojure.core <filters>)
+=clojure.core= is included in full by =ns=, i.e.:
+#+begin_src python
+from clojure.core import *
+#+end_src
+
+Exclude =defstruct= from being imported:
+#+begin_src clojure
+(ns joy.ns-ex
+  (:refer-clojure :exclude [defstruct]))
+;; Equivalent
+(ns joy.ns-ex
+  (:refer clojure.core :exclude [defstruct]))
+#+end_src
+
+Python:
+#+begin_src python
+from clojure.core import *
+del defstruct
+#+end_src
+*** a
+refer-clojure
+** Load libs, skipping any that are already loaded
+Load =clojure.zip= and alias it to =z=:
+#+begin_src clojure
+(require '(clojure zip [set :as s]))
+#+end_src
+Python:
+#+begin_src python
+from sys import path as p
+#+end_src
+
+Prefix Lists:
+It's common for Clojure code to depend on several libs whose names
+have the same prefix. When specifying libs, prefix lists can be used
+to reduce repetition. A prefix list contains the shared prefix
+followed by libspecs with the shared prefix removed from the lib
+names. After removing the prefix, the names that remain must not
+contain any periods.
+
+Recognized options:
+- =:as= takes a symbol as its argument and makes that symbol an alias to
+  the lib's namespace in the current namespace.
+- =:refer= takes a list of symbols to refer from the namespace or the
+  =:all= keyword to bring in all public vars.
+
+Flags:
+- =:reload= forces loading of all the identified libs even if they are
+  already loaded
+- =:reload-all= implies =:reload= and also forces loading of all libs that
+  the identified libs directly or indirectly load via require or use
+- =:verbose= triggers printing information about each load, alias, and
+  refer
+
+*** a
+require
+** Like =require=, but also refer to each lib's namespace using =clojure.core/refer=
+Use everyting in =clojure.set= and =clojure.xml= without namespace
+qualification. This is never good style to do.
+#+begin_src clojure
+(ns joy.ns-ex
+  (:use [clojure set xml]))
+#+end_src
+
+Python:
+#+begin_src python
+from clojure.set import *
+from clojure.xml import *
+#+end_src
+
+Using =:only=:
+Use =clojure.test.are= and =clojure.test.is= without ns qualifier:
+#+begin_src clojure
+(ns joy.ns-ex
+  (:use [clojure.test :only (are is)]))
+#+end_src
+Python:
+#+begin_src python
+from clojure.test import are, is
+#+end_src
+*** a
+use
+** Import a Java class
+Import =java.util.Date= and =java.io.File=:
+#+begin_src clojure
+;;* Example
+;;** :
+(import java.util.Date)
+;; => java.util.Date
+
+;;** :
+(str (Date.))
+;; => "Thu Dec 21 14:21:42 CET 2017"
+#+end_src
+
+Jython:
+#+begin_src python
+from java.util import Date
+from java.io import File
+#+end_src
+*** a
+import
+** Load Clojure code from resources in classpath
+*** a
+load
+** When compiling, generate compiled bytecode for a class
+*** a
+genclass
