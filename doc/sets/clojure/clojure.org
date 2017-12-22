@@ -197,6 +197,24 @@ juxt
 #+end_src
 *** a
 take-while
+** Return a lazy sequence of the first =N= items in coll
+#+begin_src clojure
+;;* Example
+
+;;** :
+(take 3 '(1 2 3 4 5 6))
+;; => (1 2 3)
+
+;;** :
+(take 3 [1 2])
+;; => (1 2)
+
+;;** :
+(take 0 [1])
+;; => ()
+#+end_src
+*** a
+take
 ** Return a lazy sequence removing all initial items that don't match a predicate
 #+begin_src clojure
 ;;* :
@@ -395,3 +413,103 @@ load
 ** When compiling, generate compiled bytecode for a class
 *** a
 genclass
+** Return a random permutation of a collection
+*** a
+shuffle
+** Return the first logical true value of (pred x) in coll
+#+begin_src clojure
+;;* Example
+
+;;** :
+(some even? '(1 2 3 4))
+;; => true
+
+;;** :
+(some even? '(1 3 5 7))
+;; => nil
+#+end_src
+*** a
+some
+** Take a function with no args and return an infinite lazy sequence of calls to it
+#+begin_src clojure
+;;* Example
+
+;;** :
+(take 5 (repeatedly #(rand-int 11)))
+;; => (10 3 6 5 7)
+
+;;** :
+(repeatedly 5 #(rand-int 11))
+;; => (4 0 10 3 5)
+#+end_src
+*** a
+repeatedly
+** Set in-transaction value of a ref
+#+begin_src clojure
+;;* Example
+
+;;** :
+(ns user)
+
+;;** :
+(def names (ref []))
+
+(defn add-name [name]
+  (dosync
+   (alter names conj name)))
+
+(add-name "zack")
+;; => ["zack"]
+
+;;** :
+(add-name "shelley")
+;; => ["zack" "shelley"]
+
+;;** :
+names
+;; => #ref[{:status :ready, :val ["zack" "shelley"]} 0x133dc556]
+
+;;** :
+@names
+;; => ["zack" "shelley"]
+
+;;** :
+(deref names)
+;; => ["zack" "shelley"]
+#+end_src
+*** a
+alter
+** Run expressions in a transaction
+Starts a transaction if none is already running on this thread.
+
+Any uncaught exception will abort the transaction.
+
+The exprs may be run more than once, but any effects on refs will be
+atomic.
+
+#+begin_src clojure
+;;* Example
+
+;;** create two bank accounts:
+(def acc1 (ref 100))
+(def acc2 (ref 200))
+[@acc1 @acc2]
+;; => [100 200]
+
+;;** either both accounts will be changed or none:
+(defn transfer-money [a1 a2 amount]
+  (dosync
+   (alter a1 - amount)
+   (alter a2 + amount)
+   amount))
+(transfer-money acc1 acc2 20)
+;; => 20
+
+;;** :
+[@acc1 @acc2]
+;; => [80 220]
+#+end_src
+
+
+*** a
+dosync
