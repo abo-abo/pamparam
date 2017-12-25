@@ -510,6 +510,81 @@ atomic.
 ;; => [80 220]
 #+end_src
 
-
 *** a
 dosync
+** Set in-transaction-value of ref to (apply fun in-transaction-value-of-ref args). Commutative
+#+begin_src clojure
+;;* Example 1
+;; `commute' will ALWAYS run the update function TWICE
+
+;;** :
+(ns user)
+;; => user
+
+;;** :
+(defn sleep-print-update [sleep-time thread-name update-fn]
+  (fn [state]
+    (Thread/sleep sleep-time)
+    (println (str thread-name ": " state))
+    (update-fn state)))
+(def counter (ref 0))
+
+;;** :
+(dosync (ref-set counter 0))
+(dosync (commute counter (sleep-print-update 100 "Commute Thread A" inc)))
+(dosync (commute counter (sleep-print-update 150 "Commute Thread B" inc)))
+;; => Commute Thread A: 0
+;;    Commute Thread A: 0
+;;    Commute Thread B: 1
+;;    Commute Thread B: 1
+;;
+;;    2
+
+;;* Example 2
+
+;;** :
+(def counter (ref 0))
+
+(defn commute-inc! [counter]
+  (dosync
+   (Thread/sleep 100)
+   (commute counter inc)))
+
+(defn alter-inc! [counter]
+  (dosync
+   (Thread/sleep 100)
+   (alter counter inc)))
+
+(defn bombard-counter! [n f counter]
+  (apply pcalls (repeat n #(f counter))))
+
+(dosync (ref-set counter 0))
+;; => 0
+
+;;** :
+(time
+ (doall (bombard-counter! 20 alter-inc! counter)))
+;; =>
+;; "Elapsed time: 2009.621166 msecs"
+;;
+;; (1 2 3 11 7 6 4 8 10 9 13 15 14 5 19 17 12 20 18 16)
+
+;;** :
+@counter
+;; => 20
+
+;;** :
+(dosync (ref-set counter 0))
+(time
+ (doall (bombard-counter! 20 commute-inc! counter)))
+;; =>
+;; "Elapsed time: 202.306055 msecs"
+;;
+;; (1 1 8 1 1 1 1 10 9 1 1 12 12 12 12 12 12 12 19 19)
+
+;;** :
+@counter
+;; => 20
+#+end_src
+*** a
+commute
