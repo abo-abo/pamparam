@@ -504,6 +504,11 @@ When called interactively, use today's schedule file."
       (unless (= 0 (call-process-shell-command cmd))
         (error "Command failed: %s" cmd)))))
 
+(defun pamparam-slurp (f)
+  (with-temp-buffer
+    (insert-file-contents f)
+    (buffer-string)))
+
 (defun pamparam-update-card (card-front card-body repo-dir)
   (let* ((card-front-id (md5 card-front))
          (card-body-id (md5 card-body))
@@ -718,7 +723,38 @@ repository, while the new card will start with empty metadata."
 All cards above this number that would be scheduled for today
 will instead be moved to tomorrow.")
 
+(defun pamparam-merge-schedules (from to)
+  "Copy items FROM -> TO. Delete FROM."
+  (let ((from-lines
+         (cl-remove-if-not
+          (lambda (s) (string-match-p "^\\*" s))
+          (split-string (pamparam-slurp from) "\n" t)))
+        (to-lines (split-string (pamparam-slurp to) "\n" t)))
+    (pamparam-spit
+     (mapconcat #'identity
+                (append to-lines from-lines)
+                "\n")
+     to)
+    (delete-file from)))
+
+(defun pamparam-carryover-year-maybe ()
+  "Move e.g. years/2018/*.org to . if the current year is 2018."
+  (let* ((today (calendar-current-date))
+         (year (nth 2 today))
+         (default-directory (pamparam-default-directory))
+         (year-directory (format "years/%d" year)))
+    (when (file-exists-p year-directory)
+      (let ((year-files (directory-files year-directory nil "org$")))
+        (dolist (file year-files)
+          (let ((file-from (expand-file-name file year-directory))
+                (file-to (expand-file-name file)))
+            (if (file-exists-p file-to)
+                (pamparam-merge-schedules file-from file-to)
+              (rename-file file-from file-to)))))
+      (delete-directory year-directory))))
+
 (defun pamparam-reschedule-maybe ()
+  (pamparam-carryover-year-maybe)
   (let ((today (calendar-current-date)))
     (unless (and pamparam-last-rechedule
                  (<
