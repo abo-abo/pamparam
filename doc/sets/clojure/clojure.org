@@ -450,6 +450,7 @@ repeatedly
 
 ;;** :
 (ns user)
+;; => user
 
 ;;** :
 (def names (ref []))
@@ -467,7 +468,7 @@ repeatedly
 
 ;;** :
 names
-;; => #ref[{:status :ready, :val ["zack" "shelley"]} 0x133dc556]
+;; => #ref[{:status :ready, :val ["zack" "shelley"]} 0x581e2fad]
 
 ;;** :
 @names
@@ -588,3 +589,144 @@ dosync
 #+end_src
 *** a
 commute
+** Execute exprs while holding the monitor of x. Will always release the monitor of x
+#+begin_src clojure
+;;* Example
+
+;;** :
+(ns user)
+;; => user
+
+;;** :
+(def o (Object.))
+(future (locking o
+          (Thread/sleep 5000)
+          (println "done1")))
+;; => #future[{:status :pending, :val nil} 0x95509a]
+
+;;** :
+;; Run this before 5 seconds are up. The second instance waits for the
+;; first instance to print "done1" and release the lock.
+(Thread/sleep 1000)
+(locking o
+  (Thread/sleep 1000)
+  (println "done2"))
+;; => done2
+;;
+;;    nil
+#+end_src
+*** a
+locking
+** Do dynamic binding
+#+begin_src clojure
+;;* Example
+
+;;** :
+(def ^:dynamic x 2)
+
+(defn addx []
+  (+ x 10))
+
+(let [x 1000]
+  (addx))
+;; => 12
+
+;;** :
+(binding [x 1000]
+  (addx))
+;; => 1010
+#+end_src
+*** a
+binding
+** Return a lazy sequence of the values, which are evaluated in parallel
+#+begin_src clojure
+;;* Example
+(defn pvs []
+  (pvalues
+   (do
+     (Thread/sleep 200)
+     :1st)
+   (do
+     (Thread/sleep 300)
+     :2nd)
+   (keyword "3rd")))
+
+;;** :
+(time (first (pvs)))
+;; => "Elapsed time: 200.664918 msecs"
+;;
+;;    :1st
+
+;;** :
+(time (last (pvs)))
+;; => "Elapsed time: 300.375477 msecs"
+;;
+;;    :3rd
+
+;;** :
+(time (vec (pvs)))
+;; => "Elapsed time: 300.517488 msecs"
+;;
+;; [:1st :2nd :3rd]
+#+end_src
+*** a
+pvalues
+** Parallel version of map
+*** a
+pmap
+** Return a lazy seq of the intermediate values of the reduction of coll by f
+#+begin_src clojure
+;;* Example
+
+;;** :
+(map #(reduce + %) [[1] [1 2] [1 2 3]])
+;; => (1 3 6)
+
+;;** :
+(reductions + [1 2 3])
+;; => (1 3 6)
+
+;;** :
+;; with init arg
+(reductions conj [] '(1 2 3))
+;; => ([] [1] [1 2] [1 2 3])
+#+end_src
+*** a
+reductions
+** Return a map that consists of the rest of the maps conj-ed onto the first
+If a key occurs in more than one map, the mapping from the latter
+(left-to-right) will be mapping in the result.
+#+begin_src clojure
+;;* Example
+
+;;** :
+(merge {:a 1 :b 2 :c 3} {:b 9 :d 4})
+;; => {:a 1, :b 9, :c 3, :d 4}
+#+end_src
+*** a
+merge
+** Return a lazy seq of the first item in each coll, then the second etc.
+#+begin_src clojure
+;;* Example
+
+;;** :
+(interleave [:a :b :c] [1 2 3] [4 5 6])
+;; => (:a 1 4 :b 2 5 :c 3 6)
+#+end_src
+*** a
+interleave
+** Temporarily redefine vars when executing the body, e.g. when mocking for testing
+#+begin_src clojure
+;;* Example
+
+;;** :
+(type [])
+;; => clojure.lang.PersistentVector
+
+;;** :
+(with-redefs [type (constantly java.lang.String)]
+  (type []))
+;; => java.lang.String
+#+end_src
+*** a
+with-redefs
