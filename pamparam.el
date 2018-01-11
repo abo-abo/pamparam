@@ -124,7 +124,14 @@ Q - the quality of the answer:
     str))
 
 (defun pamparam-save-buffer ()
-  (write-file (buffer-file-name)))
+  (write-file (buffer-file-name))
+  (pamparam-card-abbreviate))
+
+(defun pamparam-card-abbreviate ()
+  (let ((fname (file-name-nondirectory (buffer-file-name))))
+    (when (> (length fname) 60)
+      (rename-buffer
+       (concat "card-" (substring fname 0 6) ".org")))))
 
 (defun pamparam-card-score (score &optional actual-answer)
   (let* ((card-file (file-name-nondirectory (buffer-file-name)))
@@ -684,6 +691,28 @@ repository, while the new card will start with empty metadata."
     (let ((save-silently t))
       (pamparam-save-buffer))))
 
+(defun pamparam-current-progress ()
+  (with-current-buffer (pamparam-todo-file)
+    (let ((n-done 0)
+          (n-todo 0)
+          (n-review 0))
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward "^\\* \\(TODO\\|DONE\\|REVIEW\\)" nil t)
+          (let ((ms (match-string 1)))
+            (cond ((string= ms "TODO")
+                   (cl-incf n-todo))
+                  ((string= ms "DONE")
+                   (cl-incf n-done))
+                  ((string= ms "REVIEW")
+                   (cl-incf n-review)))))
+        (list n-done n-todo n-review)))))
+
+(defun pamparam-mode-line ()
+  (cl-destructuring-bind (n-done n-todo n-review)
+      (pamparam-current-progress)
+    (format "(pam: %d/%d+%d)" n-done n-todo n-review)))
+
 (defvar pamparam-day-limit 50
   "Limit for today's repetitions.
 All cards above this number that would be scheduled for today
@@ -851,6 +880,14 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
   (when pamparam-card-mode
     (if (eq major-mode 'org-mode)
         (progn
+          (pamparam-card-abbreviate)
+          (setq-local mode-line-format
+                      `((pamparam-card-mode
+                         (:eval (pamparam-mode-line)))
+                        ,@(assq-delete-all
+                           'pamparam-card-mode
+                           (default-value 'mode-line-format))))
+          (force-mode-line-update t)
           (setq org-cycle-global-status 'contents)
           (goto-char (point-min))
           (pamparam-card-answer)
