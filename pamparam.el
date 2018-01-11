@@ -753,6 +753,48 @@ will instead be moved to tomorrow.")
               (rename-file file-from file-to)))))
       (delete-directory year-directory))))
 
+(defun pamparam-check ()
+  "Check the repo for inconsistencies and fix them.
+
+Check that all existing cards are scheduled, and only once.
+Check that there are no scheduled unexisting cards."
+  (interactive)
+  (let* ((all-cards (pamparam-cards (pamparam-default-directory)))
+         (all-schedules (delq nil
+                              (mapcar
+                               (lambda (s)
+                                 (when (string-match "file:\\([^]]+\\)" s)
+                                   (match-string 1 s)))
+                               (pamparam-cmd-to-list
+                                "git grep '^\\* TODO'"))))
+         (unscheduled-cards (cl-set-difference
+                             all-cards
+                             all-schedules
+                             :test #'equal))
+         (unexisting-cards (cl-set-difference
+                            all-schedules
+                            all-cards
+                            :test #'equal))
+         (all-schedules-nodups (delete-dups (copy-sequence all-schedules)))
+         (duplicate-cards (cl-set-difference all-schedules all-schedules-nodups)))
+    (with-current-buffer (find-file-noselect "pampile.org")
+      (goto-char (point-min))
+      (dolist (card unscheduled-cards)
+        (insert (format "* TODO [[file:%s][%s]]\n"
+                        card (nth 1 (split-string card "[-.]")))))
+      (save-buffer))
+    (dolist (card (append duplicate-cards unexisting-cards))
+      (let ((occurences (pamparam-cmd-to-list (format "git grep %s" card))))
+        (dolist (occ (if (= (length occurences) 1)
+                         occurences
+                       (cdr occurences)))
+          (with-current-buffer (find-file-noselect (car (split-string occ ":")))
+            (goto-char (point-min))
+            (re-search-forward card)
+            (delete-region (line-beginning-position)
+                           (1+ (line-end-position)))
+            (save-buffer)))))))
+
 (defun pamparam-reschedule-maybe ()
   (pamparam-carryover-year-maybe)
   (let ((today (calendar-current-date)))
