@@ -605,7 +605,7 @@ repository, while the new card will start with empty metadata."
     (cond ((string-match "^\\*+ a\n\\(.*\\)" str)
            (setq front (substring str 0 (match-beginning 0)))
            (setq back (concat "* a\n" (match-string 1 str)))
-           (setq front (string-trim-left front "[* ]*"))
+           (setq front (string-trim-left front))
            (goto-char (cdr bnd)))
           ((string-match "\\`\\*+ \\(.*\\)\n\\([^*]+\\)\\(?:\n\\*\\)?" str)
            (setq front (match-string 1 str))
