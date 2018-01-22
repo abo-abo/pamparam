@@ -611,7 +611,7 @@ repository, while the new card will start with empty metadata."
            (setq front (match-string 1 str))
            (setq back (match-string 2 str))
            (goto-char (+ (car bnd) (match-end 2)))
-           (setq back (string-trim-right back "\n+")))
+           (setq back (string-trim-right back)))
           (t
            (error "unexpected")))
     (cons front back)))
