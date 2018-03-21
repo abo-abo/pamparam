@@ -152,7 +152,8 @@ Q - the quality of the answer:
              (if (or (= score 5)
                      (= score 4)
                      (= score 3))
-                 (let ((org-log-done nil))
+                 (let ((org-log-done nil)
+                       (inhibit-message t))
                    (org-todo 'done))
                (let ((item (pamparam-delete-region
                             (line-beginning-position)
