@@ -89,6 +89,25 @@ Q - the quality of the answer:
                   (or actual-answer "")))
   (org-table-align))
 
+(defun pamparam-wdiff (actual-answer)
+  (let ((expected-answer
+         (save-excursion
+           (goto-char (point-max))
+           (skip-chars-backward "\n")
+           (buffer-substring-no-properties
+            (line-beginning-position)
+            (line-end-position)))))
+    (when (and actual-answer
+               (not (pamparam-equal actual-answer expected-answer))
+               (executable-find "wdiff"))
+      (message
+       (string-trim
+        (shell-command-to-string
+         (format
+          "wdiff -i <(echo \"%s\") <(echo \"%s\")"
+          actual-answer
+          (string-trim-right expected-answer "[.?!]"))))))))
+
 (defun pamparam-card-read-stats ()
   (goto-char (point-min))
   (if (re-search-forward "^\\*\\* stats\n" nil t)
@@ -219,7 +238,8 @@ Q - the quality of the answer:
               (insert todo-entry)
               (pamparam-save-buffer))
             (kill-buffer))))
-      (pamparam-save-buffer))))
+      (pamparam-save-buffer)
+      (pamparam-wdiff actual-answer))))
 
 (defvar-local pamparam-card-answer-validate-p nil)
 
