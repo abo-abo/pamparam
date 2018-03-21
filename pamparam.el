@@ -511,19 +511,20 @@ When called interactively, use today's schedule file."
       (pamparam--update-card prev-file (concat (substring fnn 0 2) "/" fnn)))
     old-metadata))
 
-(if (eq system-type 'windows-nt)
-    (defsubst pamparam-spit (str file)
-      (with-current-buffer (find-file-noselect file)
-        (erase-buffer)
-        (insert str)
-        (save-buffer)
-        (kill-buffer (current-buffer))))
-  (defun pamparam-spit (str file)
-    (let ((cmd (format "echo '%s' > %s"
-                       (replace-regexp-in-string "'" "'\\''" str t t)
-                       (shell-quote-argument file))))
-      (unless (= 0 (call-process-shell-command cmd))
-        (error "Command failed: %s" cmd)))))
+(eval-when-compile
+  (if (eq system-type 'windows-nt)
+      (defun pamparam-spit (str file)
+        (with-current-buffer (find-file-noselect file)
+          (erase-buffer)
+          (insert str)
+          (save-buffer)
+          (kill-buffer (current-buffer))))
+    (defun pamparam-spit (str file)
+      (let ((cmd (format "echo '%s' > %s"
+                         (replace-regexp-in-string "'" "'\\''" str t t)
+                         (shell-quote-argument file))))
+        (unless (= 0 (call-process-shell-command cmd))
+          (error "Command failed: %s" cmd))))))
 
 (defun pamparam-slurp (f)
   (with-temp-buffer
