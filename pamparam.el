@@ -346,7 +346,7 @@ When SB has multiple lines, SA may match one of them."
 
 (defun pamparam-sloppy (str)
   (mapcar #'downcase
-          (split-string str "[.,?! ]" t)))
+          (split-string str "[.,?!: ]" t)))
 
 (defvar pamparam-load-file-name (or load-file-name
                                     (buffer-file-name)))
