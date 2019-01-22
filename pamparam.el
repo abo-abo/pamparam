@@ -153,7 +153,8 @@ Q - the quality of the answer:
     str))
 
 (defun pamparam-save-buffer ()
-  (write-file (buffer-file-name))
+  (let ((inhibit-message t))
+    (write-file (buffer-file-name)))
   (pamparam-card-abbreviate))
 
 (defun pamparam-card-abbreviate ()
