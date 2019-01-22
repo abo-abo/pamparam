@@ -522,7 +522,7 @@ When called interactively, use today's schedule file."
       (pamparam--update-card prev-file (concat (substring fnn 0 2) "/" fnn)))
     old-metadata))
 
-(eval-when-compile
+(eval-and-compile
   (if (eq system-type 'windows-nt)
       (defun pamparam-spit (str file)
         (with-current-buffer (find-file-noselect file)
