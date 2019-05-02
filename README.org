@@ -126,7 +126,7 @@ De Avonturen van Kuifje is een wereldbekend Belgisch stripverhaal.
 ,** singer
 de zanger
 de zangeres
-,*** The singer is only know on in Belgium.
+,*** The singer is only known in Belgium.
 De zangeres is alleen in België bekend.
 #+end_src
 
