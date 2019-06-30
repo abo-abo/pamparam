@@ -645,6 +645,12 @@ repository, while the new card will start with empty metadata."
            (setq back (match-string 2 str))
            (goto-char (+ (car bnd) (match-end 2)))
            (setq back (string-trim-right back)))
+          ((string-match "\\`\\(\\*+ \\).*{\\([^}]+\\)}.*\\'" str)
+           (setq front
+                 (concat (substring str (match-end 1) (1- (match-beginning 2)))
+                         "[...]"
+                         (substring str (1+ (match-end 2)))))
+           (setq back (match-string 2 str)))
           (t
            (error "unexpected")))
     (cons front back)))
@@ -916,7 +922,10 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
 (defun pamparam-commit ()
   "Commit the current progress using Git."
   (interactive)
-  (let* ((default-directory (pamparam-default-directory))
+  (let* ((repo-dir (pamparam-repo-directory (buffer-file-name)))
+         (default-directory (if (file-exists-p repo-dir)
+                                repo-dir
+                              (pamparam-default-directory)))
          (status (pamparam-cmd-to-list "git status"))
          (card-count
           (cl-count-if

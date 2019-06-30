@@ -2,6 +2,7 @@
 https://en.wikipedia.org/wiki/List_of_European_countries_by_population
 ** Germany
 Berlin
+** Berlin is the capital of {Germany}.
 ** France
 Paris
 ** United Kingdom
