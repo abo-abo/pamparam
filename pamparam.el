@@ -202,6 +202,13 @@ Q - the quality of the answer:
            (user-error "Unexpected state: %s" state)))
     (outline-show-all)))
 
+(defun pamparam-card-manual-score ()
+  "Score the card 0-5 manually."
+  (interactive)
+  (undo)
+  (let ((score (completing-read "score: " '("0" "1" "2" "3" "4" "5") nil t)))
+    (pamparam-card-score (string-to-number score))))
+
 (defun pamparam--todo-from-file (card-file)
   (if (string-match "\\`\\([^-]+\\)-" card-file)
       (format
@@ -990,6 +997,7 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
                      :break t)
     (worf-define-key map (kbd "D") 'pamparam-card-delete)
     (define-key map (kbd ".") 'pamparam-card-validate-maybe)
+    (define-key map (kbd "M-m") 'pamparam-card-manual-score)
     map))
 
 (define-minor-mode pamparam-card-mode
