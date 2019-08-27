@@ -1019,7 +1019,7 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
           (setq org-cycle-global-status 'contents)
           (goto-char (point-min))
           (pamparam-card-answer)
-          (org-hide-block-all))
+          (outline-hide-body))
       (pamparam-card-mode -1))))
 
 (lispy-raise-minor-mode 'pamparam-card-mode)
