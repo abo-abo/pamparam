@@ -9,6 +9,10 @@ test:
 compile:
 	$(BEMACS) -batch -l targets/compile.el
 
+plain:
+	$(emacs) --version
+	$(emacs) -Q -l elpa.el -l pamparam.el doc/sets/capitals/capitals.org
+
 update:
 	$(emacs) -batch -l targets/install-deps.el
 
