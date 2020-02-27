@@ -602,6 +602,11 @@ repository, while the new card will start with empty metadata."
     (pamparam--recompute-git-cards repo-dir)
     (pamparam--sync repo-dir)))
 
+(defun pamparam-kill-buffer-of-file (fname)
+  (dolist (buf (buffer-list))
+    (when (equal fname (buffer-file-name buf))
+      (kill-buffer buf))))
+
 (defun pamparam--sync (repo-dir)
   (let ((old-point (point))
         (processed-headings nil)
@@ -617,9 +622,11 @@ repository, while the new card will start with empty metadata."
            processed-headings new-cards updated-cards repo-dir)))
     (goto-char old-point)
     (when (or new-cards updated-cards)
-      (pamparam-schedule-today
-       (mapcar #'pamparam--todo-from-file new-cards)
-       (find-file (expand-file-name "pampile.org" repo-dir)))
+      (let ((pile-fname (expand-file-name "pampile.org" repo-dir)))
+        (pamparam-kill-buffer-of-file pile-fname)
+        (pamparam-schedule-today
+         (mapcar #'pamparam--todo-from-file new-cards)
+         (find-file-noselect pile-fname)))
       (shell-command-to-string
        (format
         "cd %s && git add . && git commit -m %s"
