@@ -580,7 +580,7 @@ When called interactively, use today's schedule file."
                 'new)
               card-file)))))
 
-(defconst pamparam-card-source-regexp "^\\* .*:cards:")
+(defconst pamparam-card-source-regexp "^\\*+ .*:cards:")
 
 (defun pamparam-sync ()
   "Synchronize the current `org-mode' master file to the cards repository.
@@ -673,11 +673,10 @@ repository, while the new card will start with empty metadata."
   (let ((end (save-excursion
                (outline-end-of-subtree)
                (point))))
-    (while (re-search-forward "^\\*\\{2,3\\} \\(.*\\)$" end t)
+    (while (re-search-forward "^\\*+ \\(.*\\)$" end t)
       (let* ((card-info (pamparam--card-info))
              (card-front (car card-info))
              (card-body (cdr card-info))
-             card-info
              card-file)
         (if (member card-front processed-headings)
             (error "Duplicate heading encountered: %s" card-front)
