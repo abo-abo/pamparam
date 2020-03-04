@@ -998,6 +998,14 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
         (pamparam-card-mode))
     (user-error "Applies only to card files")))
 
+(defun pamparam-shifttab ()
+  "Hide/show everything."
+  (interactive)
+  (when (eq org-cycle-global-status 'overview)
+    (setq org-cycle-global-status 'contents))
+  (setq this-command last-command)
+  (org-cycle-internal-global))
+
 ;;* `pamparam-card-mode'
 (defvar pamparam-card-mode-map
   (let ((map (make-sparse-keymap)))
@@ -1009,6 +1017,7 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
     (worf-define-key map (kbd "D") 'pamparam-card-delete)
     (define-key map (kbd ".") 'pamparam-card-validate-maybe)
     (define-key map (kbd "M-m") 'pamparam-card-manual-score)
+    (define-key map (kbd "<S-iso-lefttab>") 'pamparam-shifttab)
     map))
 
 (define-minor-mode pamparam-card-mode
