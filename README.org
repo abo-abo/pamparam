@@ -153,6 +153,13 @@ The format of the master file is fairly straightforward:
 The master file is a great summary of the info that you have
 available. It's easy to search and organize.
 
+One more option is to put all cards as level one headings. In that case, instead of
+tagging them with =:cards:=, you can add to the top of the file:
+
+#+begin_example
+#+PROPERTY: pamparam t
+#+end_example
+
 ** Card file example
 A card file looks like this:
 #+begin_src org

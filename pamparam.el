@@ -609,11 +609,12 @@ repository, while the new card will start with empty metadata."
       (kill-buffer buf))))
 
 (defun pamparam--cards-available-p ()
-  (save-excursion
-    (goto-char (point-min))
-    (if (re-search-forward pamparam-card-source-regexp nil t)
-        t
-      (error "No outlines with the :cards: tag found"))))
+  (or (org--property-global-or-keyword-value "pamparam" t)
+      (save-excursion
+        (goto-char (point-min))
+        (if (re-search-forward pamparam-card-source-regexp nil t)
+            t
+          (error "No outlines with the :cards: tag found")))))
 
 (defun pamparam--sync (repo-dir)
   (let ((old-point (point))
@@ -621,10 +622,16 @@ repository, while the new card will start with empty metadata."
         (new-cards nil)
         (updated-cards nil))
     (goto-char (point-min))
-    (while (re-search-forward pamparam-card-source-regexp nil t)
-      (lispy-destructuring-setq (processed-headings new-cards updated-cards)
-          (pamparam-sync-current-outline
-           processed-headings new-cards updated-cards repo-dir)))
+    (let* ((cards-at-level-one-p (org--property-global-or-keyword-value "pamparam" t))
+           (regex (if cards-at-level-one-p
+                      "\\*+ .*$"
+                    pamparam-card-source-regexp)))
+      (while (re-search-forward regex nil t)
+        (when cards-at-level-one-p
+          (beginning-of-line))
+        (lispy-destructuring-setq (processed-headings new-cards updated-cards)
+            (pamparam-sync-current-outline
+             processed-headings new-cards updated-cards repo-dir))))
     (goto-char old-point)
     (when (or new-cards updated-cards)
       (let ((pile-fname (expand-file-name "pampile.org" repo-dir)))
