@@ -608,8 +608,11 @@ repository, while the new card will start with empty metadata."
     (when (equal fname (buffer-file-name buf))
       (kill-buffer buf))))
 
+(defun pamapram--cards-at-level-one-p ()
+  (assoc-string "pamparam" org-keyword-properties t))
+
 (defun pamparam--cards-available-p ()
-  (or (org--property-global-or-keyword-value "pamparam" t)
+  (or (pamapram--cards-at-level-one-p)
       (save-excursion
         (goto-char (point-min))
         (if (re-search-forward pamparam-card-source-regexp nil t)
@@ -622,7 +625,7 @@ repository, while the new card will start with empty metadata."
         (new-cards nil)
         (updated-cards nil))
     (goto-char (point-min))
-    (let* ((cards-at-level-one-p (org--property-global-or-keyword-value "pamparam" t))
+    (let* ((cards-at-level-one-p (pamapram--cards-at-level-one-p))
            (regex (if cards-at-level-one-p
                       "\\*+ .*$"
                     pamparam-card-source-regexp)))
