@@ -608,8 +608,13 @@ repository, while the new card will start with empty metadata."
     (when (equal fname (buffer-file-name buf))
       (kill-buffer buf))))
 
+(defvar org-keyword-properties)
+
 (defun pamapram--cards-at-level-one-p ()
-  (assoc-string "pamparam" org-keyword-properties t))
+  (let ((alist (if (boundp 'org-file-properties)
+                   org-file-properties
+                 org-keyword-properties)))
+    (assoc-string "pamparam" alist t)))
 
 (defun pamparam--cards-available-p ()
   (or (pamapram--cards-at-level-one-p)
