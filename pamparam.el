@@ -833,7 +833,8 @@ will instead be moved to tomorrow.")
 Check that all existing cards are scheduled, and only once.
 Check that there are no scheduled unexisting cards."
   (interactive)
-  (let* ((all-cards (pamparam-cards (pamparam-default-directory)))
+  (let* ((default-directory (pamparam-default-directory))
+         (all-cards (pamparam-cards default-directory))
          (all-schedules (delq nil
                               (mapcar
                                (lambda (s)
