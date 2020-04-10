@@ -375,12 +375,14 @@ Otherwise, the repository will be in the same directory as the master file.")
 (defun pamparam-repo-directory (file)
   "Return the Git repository that corresponds to FILE."
   (or (cdr (assoc file pamparam-alist))
-      (expand-file-name
-       (concat
-        (file-name-sans-extension
-         (file-name-nondirectory
-          file))
-        ".pam/"))))
+      (if file
+          (expand-file-name
+           (concat
+            (file-name-sans-extension
+             (file-name-nondirectory
+              file))
+            ".pam/"))
+        (locate-dominating-file default-directory ".git"))))
 
 (defun pamparam-repo-init (repo-dir)
   "Initialize REPO-DIR Git repository."
