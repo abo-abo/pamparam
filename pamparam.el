@@ -165,7 +165,8 @@ Q - the quality of the answer:
 
 (defun pamparam-card-score (score &optional actual-answer)
   (let* ((card-file (file-name-nondirectory (buffer-file-name)))
-         (state (with-current-buffer (pamparam-todo-file)
+         (todo-file (pamparam-todo-file))
+         (state (with-current-buffer todo-file
                   (goto-char (point-min))
                   (search-forward card-file)
                   (goto-char (+ 2 (line-beginning-position)))
@@ -176,7 +177,7 @@ Q - the quality of the answer:
                      (point)))))
          (save-silently t))
     (cond ((string= state "REVIEW")
-           (with-current-buffer (pamparam-todo-file)
+           (with-current-buffer todo-file
              (goto-char (point-min))
              (search-forward card-file)
              (if (or (= score 5)
