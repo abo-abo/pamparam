@@ -201,6 +201,8 @@ Q - the quality of the answer:
            (pamparam--card-score score nil actual-answer))
           (t
            (user-error "Unexpected state: %s" state)))
+    (with-current-buffer todo-file
+      (pamparam--recalculate-progress))
     (outline-show-all)))
 
 (defun pamparam-card-manual-score ()
@@ -771,22 +773,29 @@ repository, while the new card will start with empty metadata."
     (let ((save-silently t))
       (pamparam-save-buffer))))
 
+(defvar-local pamparam--progress nil
+  "Cache the current progress.")
+
 (defun pamparam-current-progress ()
   (with-current-buffer (pamparam-todo-file)
-    (let ((n-done 0)
-          (n-todo 0)
-          (n-review 0))
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward "^\\* \\(TODO\\|DONE\\|REVIEW\\)" nil t)
-          (let ((ms (match-string 1)))
-            (cond ((string= ms "TODO")
-                   (cl-incf n-todo))
-                  ((string= ms "DONE")
-                   (cl-incf n-done))
-                  ((string= ms "REVIEW")
-                   (cl-incf n-review)))))
-        (list n-done n-todo n-review)))))
+    pamparam--progress))
+
+(defun pamparam--recalculate-progress ()
+  (setq pamparam--progress
+        (let ((n-done 0)
+              (n-todo 0)
+              (n-review 0))
+          (save-excursion
+            (goto-char (point-min))
+            (while (re-search-forward "^\\* \\(TODO\\|DONE\\|REVIEW\\)" nil t)
+              (let ((ms (match-string 1)))
+                (cond ((string= ms "TODO")
+                       (cl-incf n-todo))
+                      ((string= ms "DONE")
+                       (cl-incf n-done))
+                      ((string= ms "REVIEW")
+                       (cl-incf n-review)))))
+            (list n-done n-todo n-review)))))
 
 (defun pamparam-mode-line ()
   (cl-destructuring-bind (n-done n-todo n-review)
