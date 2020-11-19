@@ -778,7 +778,8 @@ repository, while the new card will start with empty metadata."
 
 (defun pamparam-current-progress ()
   (with-current-buffer (pamparam-todo-file)
-    pamparam--progress))
+    (or pamparam--progress
+        (pamparam--recalculate-progress))))
 
 (defun pamparam--recalculate-progress ()
   (setq pamparam--progress
