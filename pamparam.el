@@ -4,8 +4,8 @@
 
 ;; Author: Oleh Krehel <ohwoeowho@gmail.com>
 ;; URL: https://github.com/abo-abo/pamparam
-;; Version: 0.0.0
-;; Package-Requires: ((emacs "24.3") (lispy "0.26.0") (worf "0.1.0") (hydra "0.13.4"))
+;; Version: 0.1.0
+;; Package-Requires: ((emacs "24.3") (lispy "0.26.0") (worf "0.1.0") (hydra "0.13.4") (ivy-posframe "0.5.5"))
 ;; Keywords: outlines, hypermedia, flashcards, memory
 
 ;; This file is not part of GNU Emacs
@@ -35,6 +35,7 @@
 (require 'worf)
 (require 'lispy)
 (require 'hydra)
+(require 'ivy)
 (if (version< emacs-version "26.1")
     (progn
       (defsubst string-trim-right (string &optional regexp)
@@ -264,7 +265,13 @@ Q - the quality of the answer:
 
 (defvar-local pamparam-card-answer-validate-p nil)
 
-(defun pamparam-card-answer ()
+(defcustom pamparam-card-answer-function #'pamparam-card-answer-at-point
+  "Select how to answer the card."
+  :type '(choice
+          (const :tag "Answer at point" pamparam-card-answer-at-point)
+          (const :tag "Answer in a child frame" pamparam-card-answer-posframe)))
+
+(defun pamparam-card-answer-at-point ()
   "Answer the current card.
 Enter the answer at point, then press \".\" to validate."
   (goto-char (point-min))
@@ -273,9 +280,56 @@ Enter the answer at point, then press \".\" to validate."
   (goto-char (point-min))
   (insert "* \n")
   (goto-char 3)
-  (setq pamparam-card-answer-validate-p t))
+  (setq pamparam-card-answer-validate-p t)
+  (outline-hide-body))
+
+(defvar pamparam-posframe-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-v") #'pamparam-card-reveal)
+    map)
+  "The keymap for `pamparam-card-answer-posframe'")
+
+(defun pamparam-card-reveal ()
+  (interactive)
+  (with-current-buffer (ivy-state-buffer ivy-last)
+    (pamparam-shifttab)))
+
+(defun pamparam--ivy-read-posframe (prompt)
+  (let ((ivy-posframe-state (bound-and-true-p ivy-posframe-mode)))
+    (unless ivy-posframe-state
+      (ivy-posframe-mode 1))
+    (unwind-protect
+         (ivy-read prompt nil
+                   :keymap pamparam-posframe-keymap)
+      (unless ivy-posframe-state
+        (ivy-posframe-mode -1)))))
+
+(defun pamparam-card-answer-posframe ()
+  (let* ((card-front
+          (save-excursion
+            (goto-char (point-min))
+            (zo-down 1)
+            (substring-no-properties (org-get-heading))))
+         (answer (pamparam--ivy-read-posframe
+                  (concat card-front ": "))))
+    (unless (string= answer "")
+      (pamparam-card-validate answer (pamparam--card-true-answer)))
+    (remove-overlays (point-min) (point-max) 'invisible 'outline)))
+
+(defun pamparam-card-answer ()
+  "Answer the current card."
+  (funcall pamparam-card-answer-function))
 
 (defvar pamparam-is-redo nil)
+
+(defun pamparam--card-true-answer ()
+  (save-excursion
+    (goto-char (point-max))
+    (re-search-backward "^\\*")
+    (beginning-of-line 2)
+    (buffer-substring-no-properties
+     (point)
+     (1- (point-max)))))
 
 (defun pamparam-card-validate-maybe (&optional arg)
   "Validate the given answer and score the current card.
@@ -284,30 +338,28 @@ The given answer is the text between the card's first heading and
 point."
   (interactive "p")
   (if pamparam-card-answer-validate-p
-      (let ((tans (save-excursion
-                    (goto-char (point-max))
-                    (re-search-backward "^\\*")
-                    (beginning-of-line 2)
-                    (buffer-substring-no-properties
-                     (point)
-                     (1- (point-max)))))
+      (let ((tans (pamparam--card-true-answer))
             (actual-answer (buffer-substring-no-properties
                             (+ (line-beginning-position) 2)
                             (line-end-position))))
         (delete-region (point-min)
                        (1+ (line-end-position)))
         (setq pamparam-card-answer-validate-p nil)
-        (if (pamparam-equal actual-answer tans)
-            (if (save-excursion
-                  (goto-char (point-max))
-                  (re-search-backward "^\\* ")
-                  (overlays-in (point) (point-max)))
-                (if pamparam-is-redo
-                    (pamparam-card-score 4)
-                  (pamparam-card-score 5))
-              (pamparam-card-score 3))
-          (pamparam-card-score 0 actual-answer)))
+        (pamparam-card-validate actual-answer tans))
     (self-insert-command arg)))
+
+(defun pamparam-card-validate (actual-answer correct-answer)
+  "Give a card score, comparing ACTUAL-ANSWER to CORRECT-ANSWER."
+  (if (pamparam-equal actual-answer correct-answer)
+      (if (save-excursion
+            (goto-char (point-max))
+            (re-search-backward "^\\* ")
+            (overlays-in (point) (point-max)))
+          (if pamparam-is-redo
+              (pamparam-card-score 4)
+            (pamparam-card-score 5))
+        (pamparam-card-score 3))
+    (pamparam-card-score 0 actual-answer)))
 
 ;;* Equivalence testing
 (defvar pamparam-equiv-hash (make-hash-table :test 'equal))
@@ -1068,8 +1120,7 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
           (force-mode-line-update t)
           (setq org-cycle-global-status 'contents)
           (goto-char (point-min))
-          (pamparam-card-answer)
-          (outline-hide-body))
+          (pamparam-card-answer))
       (pamparam-card-mode -1))))
 
 (lispy-raise-minor-mode 'pamparam-card-mode)
