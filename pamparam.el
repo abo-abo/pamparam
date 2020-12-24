@@ -1030,10 +1030,11 @@ If you have no more cards scheduled for today, use `pamparam-pull'."
 (defun pamparam-shifttab ()
   "Hide/show everything."
   (interactive)
-  (when (eq org-cycle-global-status 'overview)
-    (setq org-cycle-global-status 'contents))
-  (setq this-command last-command)
-  (org-cycle-internal-global))
+  (let ((inhibit-message t))
+    (when (eq org-cycle-global-status 'overview)
+      (setq org-cycle-global-status 'contents))
+    (setq this-command last-command)
+    (org-cycle-internal-global)))
 
 ;;* `pamparam-card-mode'
 (defvar pamparam-card-mode-map
