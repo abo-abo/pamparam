@@ -5,7 +5,7 @@
 ;; Author: Oleh Krehel <ohwoeowho@gmail.com>
 ;; URL: https://github.com/abo-abo/pamparam
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.3") (lispy "0.26.0") (worf "0.1.0") (hydra "0.13.4") (ivy-posframe "0.5.5"))
+;; Package-Requires: ((emacs "24.3") (lispy "0.26.0") (worf "0.1.0") (ivy-posframe "0.5.5"))
 ;; Keywords: outlines, hypermedia, flashcards, memory
 
 ;; This file is not part of GNU Emacs
