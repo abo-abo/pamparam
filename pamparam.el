@@ -300,8 +300,9 @@ Enter the answer at point, then press \".\" to validate."
     (unless ivy-posframe-state
       (ivy-posframe-mode 1))
     (unwind-protect
-         (ivy-read prompt nil
-                   :keymap pamparam-posframe-keymap)
+         (let ((ivy-add-newline-after-prompt t))
+           (ivy-read prompt nil
+                     :keymap pamparam-posframe-keymap))
       (unless ivy-posframe-state
         (ivy-posframe-mode -1)))))
 
