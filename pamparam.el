@@ -1,11 +1,11 @@
 ;;; pamparam.el --- Simple and fast flashcards. -*- lexical-binding: t -*-
 
-;; Copyright (C) 2016 Oleh Krehel
+;; Copyright (C) 2016-2020 Oleh Krehel
 
 ;; Author: Oleh Krehel <ohwoeowho@gmail.com>
 ;; URL: https://github.com/abo-abo/pamparam
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.3") (lispy "0.26.0") (worf "0.1.0") (ivy-posframe "0.5.5"))
+;; Package-Requires: ((emacs "26.1") (lispy "0.27.0") (worf "0.1.0") (ivy-posframe "0.5.5"))
 ;; Keywords: outlines, hypermedia, flashcards, memory
 
 ;; This file is not part of GNU Emacs
@@ -36,16 +36,10 @@
 (require 'lispy)
 (require 'hydra)
 (require 'ivy)
-(if (version< emacs-version "26.1")
-    (progn
-      (defsubst string-trim-right (string &optional regexp)
-        "Trim STRING of trailing string matching REGEXP.
 
-REGEXP defaults to  \"[ \\t\\n\\r]+\"."
-        (if (string-match (concat "\\(?:" (or regexp "[ \t\n\r]+") "\\)\\'") string)
-            (replace-match "" t t string)
-          string)))
-  (require 'subr-x))
+(defgroup pamparam nil
+  "Simple and fast flashcards."
+  :group 'flashcards)
 
 ;;* Pure
 (defun pamparam-sm2 (card-stats q)
