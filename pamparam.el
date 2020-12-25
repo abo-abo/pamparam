@@ -286,6 +286,7 @@ Enter the answer at point, then press \".\" to validate."
 (defvar pamparam-posframe-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-v") #'pamparam-card-reveal)
+    (define-key map (kbd ".") #'ivy-done)
     map)
   "The keymap for `pamparam-card-answer-posframe'")
 
