@@ -170,7 +170,8 @@ Q - the quality of the answer:
                    (progn
                      (forward-word)
                      (point)))))
-         (save-silently t))
+         (save-silently t)
+         (inhibit-read-only t))
     (cond ((string= state "REVIEW")
            (with-current-buffer todo-file
              (goto-char (point-min))
