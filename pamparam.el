@@ -313,7 +313,8 @@ Enter the answer at point, then press \".\" to validate."
                   (concat card-front ": "))))
     (unless (string= answer "")
       (pamparam-card-validate answer (pamparam--card-true-answer)))
-    (remove-overlays (point-min) (point-max) 'invisible 'outline)))
+    (remove-overlays (point-min) (point-max) 'invisible 'outline)
+    (read-only-mode 1)))
 
 (defun pamparam-card-answer ()
   "Answer the current card."
