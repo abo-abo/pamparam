@@ -302,6 +302,7 @@ Enter the answer at point, then press \".\" to validate."
         (ivy-posframe-mode -1)))))
 
 (defun pamparam-card-answer-posframe ()
+  (outline-hide-body)
   (read-only-mode 1)
   (let* ((card-front
           (save-excursion
