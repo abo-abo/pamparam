@@ -571,16 +571,18 @@ When called interactively, use today's schedule file."
         (error "Unexpected file name %s" gf)))))
 
 (defun pamparam--replace-card (_card-front _card-body repo-dir card-file prev-file)
-  (let ((old-metadata
-         (with-temp-buffer
-           (insert-file-contents (expand-file-name prev-file repo-dir))
-           (goto-char (point-min))
-           (when (looking-at "\\* m$")
-             (outline-end-of-subtree)
-             (buffer-substring-no-properties
-              (point-min)
-              (1+ (point)))))))
-    (delete-file (expand-file-name prev-file repo-dir))
+  (let* ((full-name (expand-file-name prev-file repo-dir))
+         (old-metadata
+          (with-temp-buffer
+            (insert-file-contents full-name)
+            (goto-char (point-min))
+            (when (looking-at "\\* m$")
+              (outline-end-of-subtree)
+              (buffer-substring-no-properties
+               (point-min)
+               (1+ (point)))))))
+    (pamparam-kill-buffer-of-file full-name)
+    (delete-file full-name)
     (let ((default-directory repo-dir)
           (fnn (file-name-nondirectory card-file)))
       (pamparam--update-card prev-file (concat (substring fnn 0 2) "/" fnn)))
